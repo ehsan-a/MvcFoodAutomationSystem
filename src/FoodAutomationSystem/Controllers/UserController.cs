@@ -44,6 +44,7 @@ namespace FoodAutomationSystem.Controllers
         {
             var selectedDate = string.IsNullOrEmpty(date) ? DateTime.Now.AddDays(1).Date : DateTime.Parse(date);
             var menu = await _menuService.GetByDate(selectedDate);
+            if (menu == null) return NotFound();
             var dates = Enumerable.Range(0, 7).Select(i => menu.WeekStartDate.AddDays(i).ToString("yyyy-MM-dd")).ToList();
             FoodMenu breakfast = null;
             var query = await _foodMenuService.GetByIdTypeDateAsync(menu.Id, FoodType.Breakfast, selectedDate);
@@ -82,7 +83,6 @@ namespace FoodAutomationSystem.Controllers
             {
                 User = user,
                 Reservations = (await _reservationService.GetByUserId(user.Id)).ToList()
-
             };
             return View(vm);
         }
@@ -104,6 +104,7 @@ namespace FoodAutomationSystem.Controllers
         public async Task<IActionResult> FoodDetails(int id)
         {
             var foodMenu = await _foodMenuService.GetByIdAsync(id);
+            if (foodMenu == null) return NotFound();
             var date = foodMenu.Menu.WeekStartDate.AddDays((int)foodMenu.DayOfWeek);
             var vm = new FoodMenuViewModel
             {
@@ -114,6 +115,7 @@ namespace FoodAutomationSystem.Controllers
             return View(vm);
         }
 
+        [HttpPost]
         public async Task<IActionResult> QRTicket(int id)
         {
             var vm = new QRTicketViewModel
@@ -122,7 +124,6 @@ namespace FoodAutomationSystem.Controllers
             };
             return View(vm);
         }
-
 
         public async Task<IActionResult> ReservationSuccess(int id)
         {

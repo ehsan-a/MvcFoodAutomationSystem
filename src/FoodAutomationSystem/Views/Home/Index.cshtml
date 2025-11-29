@@ -1,9 +1,146 @@
-﻿@using Domain.Entities
-@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@if (User.IsInRole("Admin"))
+{
+    ViewData["Title"] = "Home - Food Automation System";
+    <div class="container py-5">
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+        <!-- Hero Section -->
+        <section class="hero text-center mb-5 rounded-4 shadow-sm">
+            <div class="container p-5">
+                <h1 class="display-4 fw-bold">Effortless Weekly Menu Automation</h1>
+                <p class="lead text-muted mb-4">Manage meals, menus, and food items efficiently with our intuitive system.</p>
+                <a href="#features" class="btn btn-primary btn-lg rounded-pill me-3">Get Started</a>
+                <a href="#features" class="btn btn-outline-primary btn-lg rounded-pill">Learn More</a>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-5 rounded-4">
+            <div class="container">
+                <h2 class="text-center fw-bold mb-5">Features</h2>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card text-center p-4 shadow-sm h-100 rounded-4">
+                            <i class="bi bi-calendar-check feature-icon mb-3"></i>
+                            <h5 class="fw-bold mb-2">Weekly Menu Management</h5>
+                            <p class="text-muted">Easily create, edit, and view weekly menus for your organization or clients.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center p-4 shadow-sm h-100 rounded-4">
+                            <i class="bi bi-basket feature-icon mb-3"></i>
+                            <h5 class="fw-bold mb-2">Food Item Management</h5>
+                            <p class="text-muted">Add, update, and organize all food items including pricing and categories.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center p-4 shadow-sm h-100 rounded-4">
+                            <i class="bi bi-bar-chart-line feature-icon mb-3"></i>
+                            <h5 class="fw-bold mb-2">Reports & Analytics</h5>
+                            <p class="text-muted">Generate reports for menu consumption, sales, and food inventory trends.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="py-5 text-center bg-light mt-5 rounded-4 shadow-sm">
+            <div class="container">
+                <h3 class="fw-bold mb-3">Start managing your weekly menus efficiently today!</h3>
+                <a href="#" class="btn btn-primary btn-lg rounded-pill me-3">Get Started</a>
+                <a href="#" class="btn btn-outline-primary btn-lg rounded-pill">Contact Us</a>
+            </div>
+        </section>
+
+    </div>
+
+    <style>
+        .hero {
+            background: #f8f9fa;
+            padding: 4rem 0;
+            border-radius: 1.5rem !important;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: #0d6efd;
+        }
+
+        .card {
+            border-radius: 1rem !important;
+        }
+
+        section {
+            border-radius: 1.5rem !important;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            transition: 0.3s;
+        }
+    </style>
+}
+else
+{
+    ViewData["Title"] = "Home - Food Automation";
+    <div class="container py-5">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-5 rounded-4 shadow-sm p-5 bg-light">
+            <h1 class="display-4 fw-bold">Welcome to Food Automation</h1>
+            <p class="lead text-muted mb-4">Check weekly menus, select meals, and stay up-to-date with your schedule.</p>
+            <a href="/User/WeeklyMenu" class="btn btn-primary btn-lg rounded-pill me-2">View Weekly Menus</a>
+            <a href="/Identity/Account/Manage" class="btn btn-outline-primary btn-lg rounded-pill">My Profile</a>
+        </section>
+
+        <!-- Features Section -->
+        <section class="mb-5 rounded-4 p-4">
+            <h2 class="fw-bold mb-4 text-center">User Features</h2>
+            <div class="row g-4 text-center">
+                <div class="col-md-4">
+                    <div class="card p-4 shadow-sm h-100 rounded-4">
+                        <i class="bi bi-calendar-week mb-3 fs-2 text-primary"></i>
+                        <h5 class="fw-bold mb-2">Weekly Menus</h5>
+                        <p class="text-muted">Browse and view detailed weekly meal schedules.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-4 shadow-sm h-100 rounded-4">
+                        <i class="bi bi-basket2 mb-3 fs-2 text-success"></i>
+                        <h5 class="fw-bold mb-2">Select Meals</h5>
+                        <p class="text-muted">Choose your preferred meals for the upcoming week.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-4 shadow-sm h-100 rounded-4">
+                        <i class="bi bi-clock mb-3 fs-2 text-warning"></i>
+                        <h5 class="fw-bold mb-2">Meal History</h5>
+                        <p class="text-muted">View your past meals and track your preferences.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="text-center py-5 bg-light rounded-4 shadow-sm">
+            <h4 class="fw-bold mb-3">Start planning your meals for this week!</h4>
+            <a href="/User/WeeklyMenu" class="btn btn-primary rounded-pill btn-lg">View Menus</a>
+        </section>
+
+    </div>
+
+    <style>
+        .card {
+            border-radius: 1rem !important;
+        }
+
+        section {
+            border-radius: 1.5rem !important;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            transition: 0.3s;
+        }
+    </style>
+}

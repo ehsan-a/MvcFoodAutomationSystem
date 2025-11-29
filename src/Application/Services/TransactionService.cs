@@ -53,7 +53,8 @@ namespace Application.Services
         {
             var total = (await GetAllAsync()).Count();
             var success = (await GetAllAsync()).Where(x => x.Status == TransactionStatus.Success).Count();
-            return (success * 100) / total;
+
+            return success == 0 ? 0 : (success * 100) / total;
         }
         public async Task<IEnumerable<Transaction>> GetFailedPaymentsAsync()
         {
