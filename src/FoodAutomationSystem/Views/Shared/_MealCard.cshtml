@@ -1,0 +1,91 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model FoodMenuViewModel
+
+<div class="meal-card card mb-3 shadow-sm border-0">
+    <div class="d-flex justify-content-between align-items-center p-3">
+
+        <!-- Left: Title, Type & Stats -->
+        <div class="flex-grow-1 me-3">
+            <h5 class="card-title fw-bold mb-1">@Model.FoodMenu.Food.Title</h5>
+
+            <span class="badge rounded-pill @(
+                                    Model.FoodMenu.Food.Type == FoodType.Breakfast ? "bg-primary" :
+                                    Model.FoodMenu.Food.Type == FoodType.Lunch ? "bg-success" : "bg-warning text-dark") mb-2">
+                @Model.FoodMenu.Food.Type
+            </span>
+
+            <div class="d-flex gap-3 text-muted small">
+                <span>● #140 calories</span>
+                <span>● #2 ingredients</span>
+            </div>
+
+            <h6 class="fw-bold text-primary mt-2">$@Model.FoodMenu.UnitPrice</h6>
+
+            @if (Model.IsPast)
+            {
+                <p class="text-danger small mt-1">Reservation deadline passed</p>
+            }
+        </div>
+
+        <!-- Right: Buttons -->
+        <div class="d-flex flex-column gap-2">
+
+            <a asp-action="FoodDetails" asp-route-id="@Model.FoodMenu.Id"
+               class="btn btn-outline-secondary px-3">
+                View Details
+            </a>
+
+            <form asp-action="ReservationFlow" method="post">
+                <input type="hidden" name="foodMenuId" value="@Model.FoodMenu.Id" />
+                <input type="hidden" name="date" value="@Model.Date" />
+                <button class="btn btn-primary px-4"
+                        @(Model.IsPast ? "disabled" : "")>
+                    @(Model.IsPast ? "Deadline Passed" : "Reserve")
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .meal-card {
+        border-radius: 18px !important;
+        transition: .25s;
+        border: 1px solid #e7e7e7 !important;
+        background: #ffffff;
+    }
+
+        .meal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.07) !important;
+        }
+
+    .btn-outline-secondary {
+        border-radius: 10px;
+        transition: .2s;
+    }
+
+        .btn-outline-secondary:hover {
+            background: #f3f4f6;
+            color: #333;
+        }
+
+    .btn-primary {
+        border-radius: 10px;
+        transition: .2s;
+    }
+
+        .btn-primary:disabled {
+            background: #b8c2ff !important;
+            border-color: #b8c2ff !important;
+            cursor: not-allowed;
+            opacity: .8;
+        }
+
+    .badge {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+</style>

@@ -1,0 +1,122 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model FoodMenuViewModel
+@{
+    var foodMenu = Model.FoodMenu;
+    var foodTimes = new Dictionary<FoodType, string>
+    {
+        { FoodType.Breakfast, "7:00 AM - 9:00 AM" },
+        { FoodType.Lunch, "12:00 PM - 2:00 PM" },
+
+    };
+
+    string foodTypeClass = foodMenu.Food.Type == FoodType.Breakfast ? "bg-primary text-white" :
+                           foodMenu.Food.Type == FoodType.Lunch ? "bg-success text-white" :
+                           "bg-warning text-dark";
+}
+
+<div class="container py-5">
+    <div class="card mx-auto shadow-sm rounded-4" style="max-width: 600px;">
+
+        <div class="card-body p-4 p-md-5">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h2 class="card-title mb-0">@foodMenu.Food.Title</h2>
+                <span class="badge rounded-pill @foodTypeClass">@foodMenu.Food.Type.ToString().Substring(0, 1).ToUpper()@foodMenu.Food.Type.ToString().Substring(1)</span>
+            </div>
+            <p class="text-muted mb-4">@foodMenu.Food.Description</p>
+
+            <!-- Stats -->
+            <div class="row text-center g-3 mb-4">
+                <div class="col-4">
+                    <div class="bg-light rounded-3 p-3 h-100 d-flex flex-column justify-content-center">
+                        <p class="mb-1 fw-bold">$@foodMenu.UnitPrice.ToString("F2")</p>
+                        <small class="text-muted">Price</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="bg-light rounded-3 p-3 h-100 d-flex flex-column justify-content-center">
+                        <p class="mb-1 fw-bold">@foodMenu.Food.Calories</p>
+                        <small class="text-muted">Calories</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="bg-light rounded-3 p-3 h-100 d-flex flex-column justify-content-center">
+                        <p class="mb-1 fw-bold">@foodTimes[foodMenu.Food.Type]</p>
+                        <small class="text-muted">Time</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nutrition Info -->
+            <div class="bg-light rounded-3 p-4 mb-4">
+                <h5 class="mb-3">Nutritional Information</h5>
+                <div class="row text-center">
+                    <div class="col-6 mb-2 mb-md-0">
+                        <p class="mb-1 text-muted">Energy</p>
+                        <p class="fw-bold">@foodMenu.Food.Calories kcal</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="mb-1 text-muted">Serving Size</p>
+                        <p class="fw-bold">1 portion</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingredients -->
+            @* @if (food.Ingredients != null && food.Ingredients.Any())
+            { *@
+            <div class="mb-4">
+                <h5 class="mb-3">Ingredients</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    @* @foreach (var ingredient in food.Ingredients)
+                        { *@
+                    <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary">#ingredient</span>
+                    @* } *@
+                </div>
+            </div>
+            @* } *@
+
+            <!-- Actions -->
+            <div class="d-flex flex-column flex-md-row gap-3">
+                <a href="javascript:history.back();" class="btn btn-outline-secondary flex-fill">Close</a>
+                <form asp-action="ReservationFlow" method="post">
+                    <input type="hidden" name="foodMenuId" value="@Model.FoodMenu.Id" />
+                    <input type="hidden" name="date" value="@Model.Date" />
+                    <button class="btn btn-primary px-4"
+                            @(Model.IsPast ? "disabled" : "")>
+                        @(Model.IsPast ? "Deadline Passed" : "Reserve")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8f9fa;
+    }
+
+    .badge.bg-opacity-10 {
+        padding: 0.4em 0.9em;
+        font-size: 0.85rem;
+    }
+
+    .btn-primary:hover {
+        filter: brightness(0.95);
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: #fff;
+        border-color: #6c757d;
+    }
+
+    h2.card-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+</style>

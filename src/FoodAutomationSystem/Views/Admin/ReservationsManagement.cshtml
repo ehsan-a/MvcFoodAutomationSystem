@@ -1,0 +1,244 @@
+﻿@using Domain.Entities
+@model IEnumerable<Reservation>
+
+@{
+    ViewData["Title"] = "Reservation Management";
+}
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">Reservation Management</h2>
+            <p class="text-muted mb-0">View and manage all meal reservations</p>
+        </div>
+
+        <a href="#" class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm">
+            <i class="bi bi-download"></i>
+            Export Report
+        </a>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="nice-card p-4">
+                <p class="text-muted mb-1">Total Reservations</p>
+                <h4 class="fw-bold">@Model.Count()</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="nice-card p-4">
+                <p class="text-muted mb-1">Confirmed</p>
+                <h4 class="fw-bold text-success">@Model.Count(r => r.Status == ReservationStatus.Confirmed)</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="nice-card p-4">
+                <p class="text-muted mb-1">Cancelled</p>
+                <h4 class="fw-bold text-danger">@Model.Count(r => r.Status == ReservationStatus.Cancelled)</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="nice-card p-4">
+                <p class="text-muted mb-1">Total Revenue</p>
+                <h4 class="fw-bold">$@Model.Where(r => r.PaymentStatus == ReservationPaymentStatus.Success).Sum(r => r.FoodMenu.UnitPrice).ToString("0.00")</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTERS & APPLY BUTTON -->
+    <div class="nice-card p-4 mb-4">
+        <div class="row g-3 align-items-end">
+
+            <div class="col-md-3">
+                <div class="input-group rounded-pill overflow-hidden">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input id="searchInput" type="text" class="form-control border-start-0" placeholder="Search..." />
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <select id="dateFilter" class="form-select rounded-pill">
+                    <option value="all">All Dates</option>
+                    @foreach (var d in Model.Select(m => m.Date).Distinct())
+                    {
+                        <option value="@d">@d.ToString("yyyy-MM-dd")</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select id="mealFilter" class="form-select rounded-pill">
+                    <option value="all">All Meal Types</option>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select id="paymentFilter" class="form-select rounded-pill">
+                    <option value="all">All Payment Status</option>
+                    <option value="success">Success</option>
+                    <option value="failed">Failed</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+
+            <div class="col-md-1 d-grid">
+                <button class="btn btn-primary rounded-pill">Apply</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="nice-card overflow-hidden">
+
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 modern-table" id="reservationTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Reservation ID</th>
+                        <th>Student</th>
+                        <th>Meal</th>
+                        <th>Type</th>
+                        <th>Date</th>
+                        <th>Price</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th style="width: 160px;">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td>@r.Id</td>
+                            <td>
+                                <div>
+                                    <p class="fw-bold mb-0">@r.User.LastName</p>
+                                    <small class="text-muted">@r.UserId</small>
+                                </div>
+                            </td>
+                            <td>@r.FoodMenu.Food.Title</td>
+                            <td>
+                                <span class="pill-badge @(
+                                      r.FoodMenu.Food.Type == FoodType.Breakfast ? "bg-primary text-white" :
+                                      r.FoodMenu.Food.Type == FoodType.Lunch ? "bg-success text-white" :
+                                      "bg-warning text-dark")">
+                                    @r.FoodMenu.Food.Type
+                                </span>
+                            </td>
+                            <td>@r.Date.ToString("MMM dd, yyyy")</td>
+                            <td>$@r.FoodMenu.UnitPrice.ToString("0.00")</td>
+                            <td>
+                                <span class="pill-badge @(
+                                      r.PaymentStatus == ReservationPaymentStatus.Success ? "bg-success text-white" :
+                                      r.PaymentStatus == ReservationPaymentStatus.Failed ? "bg-danger text-white" :
+                                      "bg-warning text-dark")">
+                                    @r.PaymentStatus
+                                </span>
+                            </td>
+                            <td>
+                                <span class="pill-badge @(
+                                      r.Status == ReservationStatus.Confirmed ? "bg-primary text-white" :
+                                      r.Status == ReservationStatus.Cancelled ? "bg-secondary text-white" :
+                                      "bg-info text-dark")">
+                                    @r.Status
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2 align-items-center">
+                                    @if (r.Status == ReservationStatus.Confirmed)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                            <i class="bi bi-x"></i> Cancel
+                                        </button>
+                                    }
+
+                                    @if (r.Status == ReservationStatus.Cancelled)
+                                    {
+                                        <button class="btn btn-sm btn-outline-success rounded-pill px-3">
+                                            <i class="bi bi-check"></i> Approve
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center border-top px-4 py-3">
+            <p class="text-muted mb-0">Showing @Model.Count() reservations</p>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>Previous</button>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>Next</button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    /* WHITE COMPONENTS FIX */
+    .nice-card {
+        background: #ffffff !important;
+        border-radius: 22px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+
+    .modern-table {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+        .modern-table thead th {
+            border-bottom: 2px solid #f0f0f0;
+            background: #ffffff;
+        }
+
+        .modern-table tbody tr {
+            background: #ffffff;
+            border-bottom: 1px solid #f3f3f3;
+            transition: 0.2s;
+            border-radius: 12px;
+        }
+
+            .modern-table tbody tr:hover {
+                background: #f7faff !important;
+            }
+
+    .form-control,
+    .form-select,
+    .input-group-text {
+        background: #ffffff !important;
+        border: 1px solid #e3e3e3 !important;
+        border-radius: 20px !important;
+    }
+
+    .pill-badge {
+        padding: 0.35rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+
+    .btn-rounded {
+        border-radius: 20px !important;
+    }
+
+    .input-group-text {
+        border-right: none !important;
+    }
+</style>

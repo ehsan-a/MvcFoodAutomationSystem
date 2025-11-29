@@ -1,0 +1,13 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model ReservationDataViewModel
+
+<form id="postForm" method="post" asp-controller="Reservations" asp-action="Create">
+    <input type="hidden" name="UserId" value="@Model.UserId" />
+    <input type="hidden" name="FoodMenuId" value="@Model.FoodMenuId" />
+    <input type="hidden" name="TransactionId" value="@Model.TransactionId" />
+</form>
+
+<script>
+    document.getElementById("postForm").submit();
+</script>

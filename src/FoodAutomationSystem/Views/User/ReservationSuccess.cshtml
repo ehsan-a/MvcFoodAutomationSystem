@@ -1,0 +1,159 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model QRTicketViewModel
+@{
+    var reservation = Model.Reservation;
+    var foodTimes = new Dictionary<FoodType, string>
+    {
+        { FoodType.Breakfast, "7:00 AM - 9:00 AM" },
+        { FoodType.Lunch, "12:00 PM - 2:00 PM" },
+    };
+
+    string foodTypeClass = reservation.FoodMenu.Food.Type == FoodType.Breakfast ? "bg-primary text-white" :
+                           reservation.FoodMenu.Food.Type == FoodType.Lunch ? "bg-success text-white" :
+                           "bg-warning text-dark";
+
+
+    var code = reservation.QRCode;
+    var hashBytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(code));
+}
+
+<div class="container py-5">
+    <div class="card mx-auto shadow-sm" style="max-width: 500px; border-radius: 1.5rem; overflow: hidden;">
+        <!-- Header -->
+        <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0">
+            <h5 class="mb-0">Reservation Confirmed!</h5>
+            <button type="button" class="btn-close" aria-label="Close" onclick="history.back();"></button>
+        </div>
+
+        <div class="card-body p-4 text-center">
+            <!-- Success Icon -->
+            <div class="mb-4">
+                <div class="bg-success bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width:70px; height:70px;">
+                    <i class="bi bi-check-circle-fill text-success fs-3"></i>
+                </div>
+            </div>
+            <p class="text-muted mb-4 fs-6">Your meal has been successfully reserved</p>
+
+            <!-- QR Code Section -->
+            <div class="bg-gradient rounded-4 p-4 mb-4" style="background: linear-gradient(135deg,#e0f3ff,#f3e0ff);">
+                <div class="bg-white rounded-3 shadow-sm p-4 mx-auto" style="width:220px; border-radius: 1rem;">
+                    <div style="width:200px; height:200px; margin:auto; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); gap:2px; border:4px solid #000; border-radius:0.5rem;">
+                        @for (int i = 0; i < 64; i++)
+                        {
+                            var b = hashBytes[i % hashBytes.Length];
+                            var isBlack = (b % 2) == 0;
+                            <div style="width:100%; height:100%; background-color:@(isBlack ? "#000" : "#fff"); border-radius:2px;"></div>
+                        }
+                    </div>
+                    <p class="small text-muted text-break mb-0 mt-2">@reservation.QRCode</p>
+                </div>
+                <p class="text-center text-muted mt-2 mb-0 small">Scan this code at the cafeteria entrance</p>
+            </div>
+
+            <!-- Reservation Info -->
+            <div class="mb-3 text-start">
+                <p class="text-muted mb-1">Reservation ID</p>
+                <p class="fw-bold">@reservation.Id</p>
+            </div>
+
+            <div class="bg-light rounded-3 p-3 mb-3 text-start shadow-sm">
+                <p class="text-muted mb-1">Meal</p>
+                <p class="fw-bold mb-1">@reservation.FoodMenu.Food.Title</p>
+                <span class="badge rounded-pill @foodTypeClass">
+                    @reservation.FoodMenu.Food.Type.ToString().Substring(0, 1).ToUpper()@reservation.FoodMenu.Food.Type.ToString().Substring(1)
+                </span>
+            </div>
+
+            <div class="row g-3 mb-3 text-center">
+                <div class="col-6">
+                    <div class="bg-light p-3 rounded-3 shadow-sm">
+                        <div class="d-flex justify-content-center align-items-center gap-1 mb-1">
+                            <i class="bi bi-calendar"></i>
+                            <span class="text-muted">Date</span>
+                        </div>
+                        <p class="fw-bold mb-0">@reservation.Date.ToString("MMM dd")</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="bg-light p-3 rounded-3 shadow-sm">
+                        <div class="d-flex justify-content-center align-items-center gap-1 mb-1">
+                            <i class="bi bi-clock"></i>
+                            <span class="text-muted">Time</span>
+                        </div>
+                        <p class="fw-bold mb-0">@foodTimes[reservation.FoodMenu.Food.Type]</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-light rounded-3 p-3 mb-3 text-start shadow-sm">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-geo-alt"></i>
+                    <span class="text-muted">Location</span>
+                </div>
+                <p class="fw-bold mb-0">Main Campus Cafeteria</p>
+                <small class="text-muted">Ground Floor, Building A</small>
+            </div>
+
+            <div class="bg-primary bg-opacity-10 rounded-3 p-3 mb-4 d-flex justify-content-between shadow-sm">
+                <span>Amount Paid</span>
+                <span class="fw-bold text-primary">$@reservation.FoodMenu.UnitPrice.ToString("F2")</span>
+            </div>
+
+            <!-- Important Info -->
+            <div class="bg-warning bg-opacity-10 border border-warning rounded-3 p-3 mb-4 text-start shadow-sm">
+                <p class="fw-bold text-warning mb-2">Important Information</p>
+                <ul class="mb-0 ps-3">
+                    <li>Present this QR code at the counter</li>
+                    <li>Arrive during the specified meal time</li>
+                    <li>Bring your student ID</li>
+                </ul>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-2">
+                <a href="#" class="btn btn-outline-primary flex-fill shadow-sm">
+                    <i class="bi bi-download me-1"></i> Download
+                </a>
+                <a href="javascript:history.back();" class="btn btn-primary flex-fill shadow-sm">Done</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8f9fa;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .card {
+        border-radius: 1.5rem; 
+    }
+
+    .bg-opacity-10 {
+        background-color: rgba(0,123,255,0.1) !important;
+    }
+
+    .bg-opacity-25 {
+        background-color: rgba(25, 135, 84, 0.25) !important;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #0d6efd;
+        color: #fff;
+    }
+
+    .bg-gradient {
+        transition: all 0.3s ease;
+    }
+
+    .shadow-sm {
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+    }
+</style>

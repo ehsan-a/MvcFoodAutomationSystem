@@ -1,0 +1,131 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model WeeklyMenuViewModel
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h1 class="fw-bold text-dark mb-1">Weekly Menu</h1>
+        <p class="text-muted">Browse and reserve your meals for the week</p>
+    </div>
+
+    <!-- Date Navigator -->
+    <div class="date-nav-card rounded-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+
+            <a class="btn nav-btn"
+               href="@Url.Action("WeeklyMenu", new { date = Model.Dates[Math.Max(0, Model.Dates.IndexOf(Model.SelectedDate) - 1)] })">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+
+            <div class="text-center">
+                <p class="fw-bold fs-5 mb-1 text-dark">
+                    @DateTime.Parse(Model.SelectedDate).ToString("dddd, MMMM dd")
+                </p>
+                <p class="text-muted small">@DateTime.Parse(Model.SelectedDate).Year</p>
+            </div>
+
+            <a class="btn nav-btn"
+               href="@Url.Action("WeeklyMenu", new { date = Model.Dates[Math.Min(Model.Dates.Count - 1, Model.Dates.IndexOf(Model.SelectedDate) + 1)] })">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Week Overview -->
+    <div class="d-flex gap-2 overflow-auto pb-2">
+
+        @foreach (var date in Model.Dates)
+        {
+            var isSelected = date == Model.SelectedDate;
+            var d = DateTime.Parse(date);
+
+            <a href="@Url.Action("WeeklyMenu", new { date = date })" class="text-decoration-none">
+
+                <div class="week-day-card rounded-3 px-3 py-2 shadow-sm @(isSelected ? "selected" : "")">
+                    <p class="mb-1 fw-semibold @(isSelected ? "text-primary" : "text-muted")">
+                        @d.ToString("ddd")
+                    </p>
+                    <p class="fw-bold fs-5 @(isSelected ? "text-primary" : "text-dark")">
+                        @d.Day
+                    </p>
+                </div>
+
+            </a>
+        }
+    </div>
+
+    <!-- Meals -->
+    <div class="mt-4">
+
+        @if (Model.Breakfast != null)
+        {
+            @Html.Partial("_MealCard", new FoodAutomationSystem.ViewModels.FoodMenuViewModel { FoodMenu = Model.Breakfast, Date = Model.SelectedDate, IsPast = Model.IsDeadlinePassed })
+        }
+
+        @if (Model.Lunch != null)
+        {
+            @Html.Partial("_MealCard", new FoodAutomationSystem.ViewModels.FoodMenuViewModel { FoodMenu = Model.Lunch, Date = Model.SelectedDate, IsPast = Model.IsDeadlinePassed })
+        }
+
+    </div>
+
+</div>
+
+
+<!-- Styles -->
+<style>
+    /* ---------- Date Navigator ---------- */
+    .date-nav-card {
+        background: #ffffff;
+        padding: 24px;
+        border: 1.5px solid #e3e3e3;
+        border-radius: 28px !important;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    }
+
+    .nav-btn {
+        border-radius: 16px !important;
+        border: 1.5px solid #d8d8d8 !important;
+        padding: 10px 14px !important;
+        background: #ffffff;
+        transition: .2s;
+    }
+
+        .nav-btn:hover {
+            background: #f3f4f6;
+            transform: translateY(-3px);
+        }
+
+    /* ---------- Week Selector ---------- */
+    .week-day-card {
+        background: white;
+        border: 1.5px solid #e6e6e6;
+        min-width: 70px;
+        transition: .25s;
+        text-align: center;
+        border-radius: 22px !important;
+        padding: 10px 12px;
+    }
+
+        .week-day-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        }
+
+        .week-day-card.selected {
+            background: rgba(78,115,223,0.1);
+            border-color: #4e73df;
+            box-shadow: 0 6px 20px rgba(78,115,223,0.22);
+        }
+
+    /* General cards, if needed */
+    .card,
+    .shadow-sm,
+    .rounded-3,
+    .rounded-4 {
+        border-radius: 22px !important;
+    }
+
+</style>

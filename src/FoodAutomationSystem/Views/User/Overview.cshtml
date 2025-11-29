@@ -1,0 +1,267 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model UserOverviewViewModel
+
+<div class="container py-4">
+
+    <!-- Welcome Section -->
+    <div class="welcome-card mb-4">
+        <h1 class="text-white mb-2">
+            Welcome back, @Model.User.FirstName.Split(" ")[0]!
+        </h1>
+        <p class="text-white-50 mb-4">Plan your Foods for the week ahead</p>
+
+        <div class="row g-3">
+            <!-- Wallet -->
+            <div class="col-6">
+                <div class="welcome-inner-card p-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="icon-box bg-white">
+                            <i class="bi bi-wallet2 fs-5 text-primary"></i>
+                        </div>
+                        <span class="text-white-75 ms-2">Wallet Balance</span>
+                    </div>
+                    <p class="fw-bold text-white fs-5">$@Model.WalletBalance.ToString("F2")</p>
+                </div>
+            </div>
+
+            <!-- Upcoming -->
+            <div class="col-6">
+                <div class="welcome-inner-card p-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="icon-box bg-white">
+                            <i class="bi bi-calendar-event fs-5 text-primary"></i>
+                        </div>
+                        <span class="text-white-75 ms-2">Upcoming</span>
+                    </div>
+                    <p class="fw-bold text-white fs-5">@Model.UpcomingReservations.Count Foods</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Quick Actions -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-6">
+            <a asp-action="WeeklyMenu" class="text-decoration-none">
+                <div class="action-card">
+                    <div class="action-icon bg-primary bg-opacity-10">
+                        <i class="bi bi-egg-fried fs-4 text-primary"></i>
+                    </div>
+                    <p class="fw-bold text-dark mb-1">Browse Menu</p>
+                    <p class="text-muted">View weekly Foods</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6">
+            <a asp-action="Wallet" class="text-decoration-none">
+                <div class="action-card">
+                    <div class="action-icon bg-success bg-opacity-10">
+                        <i class="bi bi-wallet2 fs-4 text-success"></i>
+                    </div>
+                    <p class="fw-bold text-dark mb-1">Add Funds</p>
+                    <p class="text-muted">Top up wallet</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+
+    <!-- Upcoming Reservations -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between mb-3">
+            <h4 class="fw-bold text-dark">Upcoming Reservations</h4>
+            <a asp-action="MyReservations" class="btn btn-sm btn-outline-primary rounded-pill">
+                View All
+            </a>
+        </div>
+
+        @if (Model.UpcomingReservations.Any())
+        {
+            foreach (var reservation in Model.UpcomingReservations.Take(3))
+            {
+                <div class="reservation-card shadow-sm mb-3">
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+                            <p class="fw-bold text-dark fs-6">@reservation.FoodMenu.Food.Title</p>
+
+                            <div class="d-flex gap-3 text-muted small">
+                                <span>
+                                    <i class="bi bi-calendar"></i>
+                                    @reservation.FoodMenu.Menu.WeekStartDate.AddDays((int)reservation.FoodMenu.DayOfWeek).ToString("MMM dd")
+                                </span>
+
+                                <span class="badge rounded-pill
+                                                                    @(reservation.FoodMenu.Food.Type == FoodType.Breakfast ? "bg-primary" :
+                                                                                                                                                              reservation.FoodMenu.Food.Type == FoodType.Lunch ? "bg-success" : "bg-warning text-dark")">
+                                    @reservation.FoodMenu.Food.Type
+                                </span>
+                            </div>
+                        </div>
+
+                        <p class="fw-bold text-dark">$@reservation.FoodMenu.UnitPrice.ToString("F2")</p>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="bg-white text-center rounded-4 p-5 border shadow-sm">
+                <div class="empty-icon">
+                    <i class="bi bi-calendar text-secondary fs-2"></i>
+                </div>
+                <h5 class="fw-bold">No upcoming reservations</h5>
+                <p class="text-muted mb-3">Start by browsing the weekly menu</p>
+                <a class="btn btn-primary rounded-pill px-4" asp-action="WeeklyMenu">Browse Menu</a>
+            </div>
+        }
+    </div>
+
+
+    <!-- Tomorrow's Menu -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between mb-3">
+            <h4 class="fw-bold text-dark">Tomorrow's Menu</h4>
+            <span class="text-muted small">
+                <i class="bi bi-clock"></i>
+                @DateTime.Now.AddDays(1).ToString("MMMM dd, yyyy")
+            </span>
+        </div>
+
+        <div class="row g-3">
+
+            @foreach (var food in Model.TomorrowsFoodMenus)
+            {
+                <div class="col-12 col-md-4">
+                    <div class="card food-card shadow-sm rounded-4">
+
+                        <div class="card-body">
+                            <h5 class="card-title">@food.Food.Title</h5>
+
+                            <span class="badge rounded-pill @(
+                                  food.Food.Type == FoodType.Breakfast ? "bg-primary" :
+                                  food.Food.Type == FoodType.Lunch ? "bg-success" : "bg-warning text-dark")">
+                                @food.Food.Type
+                            </span>
+
+                            <div class="d-flex justify-content-between text-muted mb-3 mt-2 small">
+                                <span class="fw-bold">$@food.UnitPrice.ToString("F2")</span>
+                                <span>150 cal</span>
+                            </div>
+
+                            <a asp-action="FoodDetails" asp-route-id="@food.Id" class="btn btn-outline-primary w-100 rounded-pill">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>
+<style>
+    /* MAIN WELCOME CARD */
+    .welcome-card {
+        border-radius: 28px;
+        padding: 32px;
+        background: linear-gradient(135deg, #4e73df, #6c8bfd);
+        box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+        border: 1.5px solid rgba(255,255,255,0.25);
+    }
+
+    /* INNER CARDS */
+    .welcome-inner-card {
+        border-radius: 22px;
+        border: 1.5px solid rgba(255,255,255,0.35);
+        backdrop-filter: blur(6px);
+        background: rgba(255,255,255,0.18);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    /* ICON BOX */
+    .icon-box {
+        padding: 8px;
+        border-radius: 14px;
+        border: 1.5px solid rgba(255,255,255,0.4);
+    }
+
+
+    /* ACTION CARDS */
+    .action-card {
+        background: #ffffff;
+        padding: 24px;
+        border-radius: 22px;
+        border: 1.5px solid #e6e6e6;
+        transition: .25s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+    .action-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        border: 1.5px solid #e6e6e6;
+        background: rgba(0,0,0,0.02);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+    }
+
+
+    /* RESERVATION CARD */
+    .reservation-card {
+        background: white;
+        border-radius: 22px;
+        padding: 20px 22px;
+        border: 1.5px solid #e6e6e6;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        transition: .2s;
+    }
+
+        .reservation-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+        }
+
+
+    /* EMPTY ICON */
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: #f8f9fa;
+        border-radius: 50%;
+        padding: 20px;
+        border: 1.5px solid #e0e0e0;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    /* FOOD CARD */
+    .food-card {
+        border: 1.5px solid #e6e6e6 !important;
+        border-radius: 22px !important;
+        transition: .25s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+
+        .food-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
+        }
+
+</style>

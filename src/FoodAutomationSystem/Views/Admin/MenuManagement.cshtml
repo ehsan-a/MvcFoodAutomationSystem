@@ -1,0 +1,268 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model MenuManagementViewModel
+
+@{
+    ViewData["Title"] = "Weekly Menu Management";
+}
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">Weekly Menu Management</h2>
+            <p class="text-muted mb-0">Create and manage your weekly menus efficiently</p>
+        </div>
+        <button class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm"
+                data-bs-toggle="modal" data-bs-target="#weeklyMenuFormModal">
+            <i class="bi bi-plus-lg"></i> Add New Weekly Menu
+        </button>
+    </div>
+
+    <!-- Weekly Menu Selector -->
+    <form method="get" class="nice-card p-4 mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Select Weekly Menu</label>
+                <select class="form-select rounded-pill"
+                        asp-for="SelectedWeeklyMenuId"
+                        asp-items="Model?.WeeklyMenuOptions"
+                        onchange="this.form.submit()">
+                    <option value="">-- Select Menu --</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <button type="submit"
+                        class="btn btn-outline-secondary rounded-pill px-4 w-100 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-funnel"></i> Apply
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- CHECK IF MENU EXISTS -->
+    @if (Model == null || Model.SelectedWeeklyMenu == null)
+    {
+        <div class="card text-center p-5 shadow-sm" style="border-radius: 16px;">
+            <div class="bg-light rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width:64px; height:64px;">
+                <i class="bi bi-calendar3 fs-2 text-muted"></i>
+            </div>
+            <p class="fw-bold mb-1">No weekly menu found</p>
+            <p class="text-muted mb-0">Please create a new menu to continue.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Weekly Menu Table -->
+        <div class="nice-card overflow-auto">
+            <div class="table-responsive">
+                <table class="table modern-table text-center align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Meals</th>
+
+                            @if (Model.Dates != null && Model.Days != null)
+                            {
+                                for (int i = 0; i < Model.Days.Count; i++)
+                                {
+                                    <th>
+                                        <div class="fw-semibold">@Model.Days[i]</div>
+                                        <small class="text-muted">@Model.Dates[i]</small>
+                                    </th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var mealType in Enum.GetValues(typeof(FoodType)))
+                        {
+                            <tr>
+                                <th class="text-center text-capitalize bg-white fw-semibold">
+                                    <div class="p-5 bg-light rounded-3 shadow-sm mb-2">
+                                        @mealType
+                                    </div>
+                                </th>
+
+                                @for (int i = 0; i < Model.Days.Count; i++)
+                                {
+                                    var food = Model.SelectedWeeklyMenu.FoodMenus?
+                                    .FirstOrDefault(a => a.Food.Type == (FoodType)mealType && (int)a.DayOfWeek == i);
+
+                                    <td>
+                                        @if (food != null)
+                                        {
+                                            <div class="p-3 bg-white rounded-3 shadow-sm mb-2">
+                                                <div class="fw-bold">@food.Food.Title</div>
+                                                <small class="text-muted">$@food.UnitPrice</small>
+
+                                                <button class="btn btn-outline-primary btn-sm mt-2 w-100 rounded-pill"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#addFoodModal"
+                                                        data-edit="true"
+                                                        data-mealid="@food.Id"
+                                                        data-dayindex="@i"
+                                                        data-mealtype="@mealType"
+                                                        data-foodid="@food.FoodId"
+                                                        data-unitprice="@food.UnitPrice">
+                                                    <i class="bi bi-pencil-square"></i> Edit
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-secondary btn-sm w-100 rounded-pill"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#addFoodModal"
+                                                    data-edit="false"
+                                                    data-dayindex="@i"
+                                                    data-mealtype="@mealType">
+                                                <i class="bi bi-plus-lg"></i> Add
+                                            </button>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Add/Edit Food Modal -->
+<div class="modal fade" id="addFoodModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-sm">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="foodModalTitle">Add Food to Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" class="foodForm">
+
+                    <input type="hidden" name="Id" class="food-menu-id-input" value="" />
+                    <input type="hidden" name="MenuId" value="@Model?.SelectedWeeklyMenu?.Id" />
+                    <input type="hidden" name="DayOfWeek" class="day-index-input" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Food</label>
+                        <select class="form-select rounded-pill" id="FoodSelect" name="FoodId" required>
+                            <option value="">-- Choose Food --</option>
+
+                            @if (Model?.AllFoods != null)
+                            {
+                                foreach (var food in Model.AllFoods)
+                                {
+                                    <option value="@food.Id" data-price="@food.Price">
+                                        @food.Title (@food.Type)
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Price</label>
+                        <input type="number" step="0.01" class="form-control rounded-pill" id="UnitPrice" name="UnitPrice" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary rounded-pill w-100 modal-action-btn">Add</button>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Weekly Menu Modal -->
+<div class="modal fade" id="weeklyMenuFormModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-sm">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Add New Weekly Menu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="post" asp-controller="Menus" asp-action="Create">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Week Start Date</label>
+                        <input type="date" class="form-control rounded-pill" name="WeekStartDate" required />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var addFoodModal = document.getElementById('addFoodModal');
+    var foodSelect = document.getElementById('FoodSelect');
+    var unitPriceInput = document.getElementById('UnitPrice');
+
+    addFoodModal?.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        if (!button) return;
+
+        var isEdit = button.getAttribute('data-edit') === 'true';
+        var dayIndex = button.getAttribute('data-dayindex');
+        var mealId = button.getAttribute('data-mealid');
+        var foodId = button.getAttribute('data-foodid');
+        var unitPrice = button.getAttribute('data-unitprice');
+
+        document.querySelector('.day-index-input').value = dayIndex;
+        document.querySelector('.food-menu-id-input').value = isEdit ? mealId : "";
+
+        document.getElementById("foodModalTitle").innerText =
+            isEdit ? "Edit Meal" : "Add Food to Schedule";
+
+        document.querySelector(".modal-action-btn").innerText =
+            isEdit ? "Update" : "Add";
+
+        document.querySelector(".foodForm").action =
+            isEdit ? "/FoodMenus/Edit" : "/FoodMenus/Create";
+
+        foodSelect.value = isEdit ? foodId : "";
+        unitPriceInput.value = isEdit ? unitPrice : "";
+
+        foodSelect.addEventListener('change', function () {
+            unitPriceInput.value =
+                this.selectedOptions[0]?.getAttribute('data-price') || "";
+        });
+    });
+</script>
+
+<style>
+    .nice-card {
+        background: #fff;
+        border-radius: 22px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        padding: 1.5rem;
+    }
+
+    .modern-table thead th {
+        background: #fff;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .modern-table tbody tr:hover {
+        background: #f7faff !important;
+    }
+
+    .form-control, .form-select {
+        border-radius: 20px !important;
+    }
+</style>

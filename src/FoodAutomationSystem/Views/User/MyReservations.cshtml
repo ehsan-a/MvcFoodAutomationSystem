@@ -1,0 +1,178 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model UserReservationsViewModel;
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h1 class="fw-bold text-dark mb-1">My Reservations</h1>
+        <p class="text-muted">View and manage your meal reservations</p>
+    </div>
+
+    @* Compute upcoming and past reservations *@
+    @{
+        var myReservations = Model.Reservations;
+        var upcomingReservations = myReservations.Where(r => r.Status == ReservationStatus.Confirmed && r.FoodMenu.Menu.WeekStartDate.AddDays((int)r.FoodMenu.DayOfWeek).DayOfYear >= DateTime.Now.DayOfYear).ToList();
+        var pastReservations = myReservations.Where(r => r.Status == ReservationStatus.Completed || r.Status == ReservationStatus.Cancelled).ToList();
+    }
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-4">
+            <div class="stat-card text-center">
+                <p class="text-muted mb-1">Total</p>
+                <h5 class="fw-bold mb-0">@myReservations.Count</h5>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="stat-card text-center">
+                <p class="text-muted mb-1">Upcoming</p>
+                <h5 class="fw-bold text-success mb-0">@upcomingReservations.Count</h5>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="stat-card text-center">
+                <p class="text-muted mb-1">Completed</p>
+                <h5 class="fw-bold text-primary mb-0">@pastReservations.Count</h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Reservations -->
+    <div class="mb-4">
+        <h4 class="mb-3">Upcoming Reservations</h4>
+
+        @if (upcomingReservations.Any())
+        {
+            <div class="vstack gap-3">
+                @foreach (var r in upcomingReservations)
+                {
+                    <div class="reservation-card p-3 shadow-sm">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+                            <div class="flex-fill">
+                                <h5 class="mb-2">@r.FoodMenu.Food.Title</h5>
+                                <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+                                    <span class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i> @r.Date.ToString("MMM dd, yyyy")
+                                    </span>
+                                    <span class="badge food-type-badge">
+                                        @r.FoodMenu.Food.Type
+                                    </span>
+                                    <span class="fw-bold">$@r.FoodMenu.UnitPrice.ToString("0.00")</span>
+                                    <span class="badge @(r.PaymentStatus == ReservationPaymentStatus.Success ? "bg-success text-white" : "bg-danger text-white")">
+                                        @(r.PaymentStatus == ReservationPaymentStatus.Success ? "Paid" : "Payment Failed")
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mt-2 mt-md-0">
+                                <a asp-action="QRTicket" asp-route-id="@r.Id" class="btn btn-primary d-flex align-items-center gap-1">
+                                    <i class="bi bi-qr-code"></i> View Ticket
+                                </a>
+                                <form asp-action="CancelReservation" method="post">
+                                    <input type="hidden" name="reservationId" value="@r.Id" />
+                                    <button type="submit" class="btn btn-outline-danger d-flex align-items-center gap-1">
+                                        <i class="bi bi-x-lg"></i> Cancel
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="card text-center p-5 shadow-sm no-reservation-card">
+                <div class="bg-light rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width:64px; height:64px;">
+                    <i class="bi bi-calendar3 fs-2 text-muted"></i>
+                </div>
+                <p class="fw-bold mb-1">No upcoming reservations</p>
+                <p class="text-muted mb-0">Start browsing the menu to reserve meals</p>
+            </div>
+        }
+    </div>
+
+    <!-- Past Reservations -->
+    @if (pastReservations.Any())
+    {
+        <div class="mb-4">
+            <h4 class="mb-3">Past Reservations</h4>
+            <div class="vstack gap-3">
+                @foreach (var r in pastReservations)
+                {
+                    <div class="reservation-card past p-3 shadow-sm opacity-75">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">@r.FoodMenu.Food.Title</h5>
+                                <div class="d-flex gap-2 text-muted align-items-center">
+                                    <i class="bi bi-calendar3"></i>
+                                    @r.Date.ToString("MMM dd, yyyy")
+                                    <span class="badge @(r.Status == ReservationStatus.Completed ? "bg-success text-white" : "bg-secondary text-white")">
+                                        @r.Status
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="fw-bold text-dark">$@r.FoodMenu.UnitPrice.ToString("0.00")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    /* ---------- Cards ---------- */
+    .stat-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid #e6e6e6;
+    }
+
+    /* ---------- Reservation Cards ---------- */
+    .reservation-card {
+        background: #f8f9fa;
+        border-radius: 16px;
+        transition: .2s;
+        padding: 16px;
+    }
+
+        .reservation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.07);
+        }
+
+        .reservation-card.past {
+            opacity: 0.75;
+        }
+
+    .food-type-badge {
+        border-radius: 12px;
+        padding: 4px 8px;
+        text-transform: capitalize;
+    }
+
+    /* ---------- No Reservation ---------- */
+    .no-reservation-card {
+        border-radius: 16px;
+    }
+
+    /* ---------- Buttons ---------- */
+    .btn-outline-danger {
+        border-radius: 10px;
+        transition: .2s;
+    }
+
+        .btn-outline-danger:hover {
+            background: #fceaea;
+            color: #b00;
+        }
+
+    .btn-primary {
+        border-radius: 10px;
+        transition: .2s;
+    }
+</style>

@@ -1,0 +1,295 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Overview";
+}
+
+<style>
+
+    .nice-card {
+        background: #ffffff !important;
+        border-radius: 22px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        padding: 1.5rem !important;
+    }
+
+    /* Table styling */
+    .modern-table {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+        .modern-table thead th {
+            border-bottom: 2px solid #f0f0f0;
+            background: #ffffff;
+        }
+
+        .modern-table tbody tr {
+            background: #ffffff;
+            border-bottom: 1px solid #f3f3f3;
+            transition: 0.2s;
+        }
+
+            .modern-table tbody tr:hover {
+                background: #f7faff !important;
+            }
+
+    .stat-card {
+        border-radius: 16px;
+        min-height: 130px;
+        transition: 0.2s;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        }
+
+    .chart-card {
+        border-radius: 20px !important;
+        overflow: hidden;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 320px;
+    }
+
+    .icon-circle {
+        width: 58px;
+        height: 58px;
+        border-radius: 50% !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+</style>
+
+<div class="container my-4">
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark">Dashboard Overview</h2>
+        <p class="text-muted">Welcome back! Here's what's happening today.</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="row g-4 mb-4">
+
+        <!-- Today -->
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-3 d-flex flex-row align-items-center">
+                <div class="icon-circle bg-primary bg-opacity-25 me-3">
+                    <i class="bi bi-calendar2-event fs-3 text-primary"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Today's Reservations</h6>
+                    <h4 class="mb-0">@Model.TodayReservations</h4>
+                    <small class="text-success">+12% from yesterday</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly -->
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-3 d-flex flex-row align-items-center">
+                <div class="icon-circle bg-success bg-opacity-25 me-3">
+                    <i class="bi bi-graph-up fs-3 text-success"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Weekly Reservations</h6>
+                    <h4 class="mb-0">@Model.WeeklyReservations</h4>
+                    <small class="text-success">+8% from last week</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue -->
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-3 d-flex flex-row align-items-center">
+                <div class="icon-circle bg-success bg-opacity-25 me-3">
+                    <i class="bi bi-currency-dollar fs-3" style="color:#6d28d9"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Total Revenue</h6>
+                    <h4 class="mb-0">$@Model.TotalRevenue</h4>
+                    <small class="text-success">+15% from last week</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Students -->
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-3 d-flex flex-row align-items-center">
+                <div class="icon-circle bg-warning bg-opacity-25 me-3">
+                    <i class="bi bi-people fs-3 text-warning"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Active Students</h6>
+                    <h4 class="mb-0">@Model.ActiveStudents</h4>
+                    <small class="text-success">5 new this week</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Rate -->
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-3 d-flex flex-row align-items-center">
+                <div class="icon-circle bg-success bg-opacity-25 me-3">
+                    <i class="bi bi-check-circle fs-3 text-success"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Payment Success Rate</h6>
+                    <h4 class="mb-0">@Model.SuccessRate %</h4>
+                    <small class="text-success">+2% improvement</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Failed Payments -->
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm p-3 d-flex flex-row align-items-center">
+                <div class="icon-circle bg-danger bg-opacity-25 me-3">
+                    <i class="bi bi-x-circle fs-3 text-danger"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Failed Payments</h6>
+                    <h4 class="mb-0">@Model.FailedPayments</h4>
+                    <small class="text-danger">-3 from last week</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+
+        <!-- Line Chart -->
+        <div class="col-lg-6">
+            <div class="card chart-card shadow-sm p-4">
+                <h5 class="fw-bold mb-3">Weekly Reservation Trend</h5>
+                <div class="chart-container">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie Chart -->
+        <div class="col-lg-6">
+            <div class="card chart-card shadow-sm p-4">
+                <h5 class="fw-bold mb-3">Meal Type Distribution</h5>
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Reservations Table -->
+@* <div class="card shadow-sm rounded-4 mb-5"> *@
+    <div class="nice-card overflow-hidden">
+        <h5 class="fw-bold mb-3">
+            Today's Reservations
+        </h5>
+        <div class="table-responsive">
+            <table class="table modern-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student</th>
+                        <th>Meal</th>
+                        <th>Type</th>
+                        <th>Price</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var r in Model.TodayReservationsList)
+                    {
+                        <tr>
+                            <td>@r.User.LastName</td>
+                            <td>@r.FoodMenu.Food.Title</td>
+
+                            <td>
+                                <span class="badge bg-info">@r.FoodMenu.Food.Type</span>
+                            </td>
+
+                            <td>$@r.FoodMenu.UnitPrice</td>
+
+                            <td>
+                                <span class="badge bg-@(r.PaymentStatus == ReservationPaymentStatus.Success ? "success" : r.PaymentStatus == ReservationPaymentStatus.Failed ? "danger" : "warning")">
+                                    @r.PaymentStatus
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-@(r.Status == ReservationStatus.Confirmed ? "primary" : r.Status == ReservationStatus.Cancelled ? "secondary" : "success")">
+                                    @r.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+        @* </div> *@
+    </div>
+
+
+@section Scripts {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <script>
+            // Line Chart
+            const weeklyLabels = @Html.Raw(Json.Serialize(Model.WeeklyData.Select(x => x.Name)));
+            const weeklyValues = @Html.Raw(Json.Serialize(Model.WeeklyData.Select(x => x.Value)));
+
+            new Chart(document.getElementById("lineChart"), {
+                type: "line",
+                data: {
+                    labels: weeklyLabels,
+                    datasets: [{
+                        label: "Reservations",
+                        data: weeklyValues,
+                        borderWidth: 3,
+                        borderColor: "#3b82f6",
+                        backgroundColor: "rgba(59,130,246,0.12)",
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Pie Chart
+            const mealLabels = @Html.Raw(Json.Serialize(Model.FoodTypeData.Select(x => x.Name)));
+            const mealValues = @Html.Raw(Json.Serialize(Model.FoodTypeData.Select(x => x.Value)));
+            const mealColors = @Html.Raw(Json.Serialize(Model.FoodTypeData.Select(x => x.Color)));
+
+            new Chart(document.getElementById("pieChart"), {
+                type: "pie",
+                data: {
+                    labels: mealLabels,
+                    datasets: [{
+                        data: mealValues,
+                        backgroundColor: mealColors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+        </script>
+}

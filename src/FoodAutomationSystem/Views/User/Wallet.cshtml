@@ -1,0 +1,263 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model UserWalletViewModel
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h1 class="fw-bold text-dark mb-1">My Wallet</h1>
+        <p class="text-muted">Manage your wallet and view transaction history</p>
+    </div>
+
+    <!-- Wallet Balance Card -->
+    <div class="wallet-balance-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <p class="text-light opacity-75 mb-1">Current Balance</p>
+                <h1 class="text-white">$@Model.WalletBalance.ToString("0.00")</h1>
+            </div>
+            <div class="wallet-icon d-flex align-items-center justify-content-center">
+                <i class="bi bi-wallet2 fs-2 text-white"></i>
+            </div>
+        </div>
+
+        <button class="btn btn-light text-primary w-100 fw-bold"
+                data-bs-toggle="collapse" data-bs-target="#topUpForm">
+            <i class="bi bi-plus-lg me-2"></i> Add Funds
+        </button>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-arrow-up-circle"></i>
+                    </div>
+                    <span class="text-muted">Total Added</span>
+                </div>
+                <h5 class="fw-semibold text-dark">
+                    $@Model.Transactions.Where(t => t.Type == TransactionType.WalletTopUp).Sum(t => t.Amount).ToString("0.00")
+                </h5>
+            </div>
+        </div>
+
+        <div class="col-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-arrow-down-circle"></i>
+                    </div>
+                    <span class="text-muted">Total Spent</span>
+                </div>
+                <h5 class="fw-semibold text-dark">
+                    $@Math.Abs(Model.Transactions.Where(t => t.Type == TransactionType.Reservation)
+                                        .Sum(t => t.Amount)).ToString("0.00")
+                </h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Up Form -->
+    <div id="topUpForm" class="collapse mb-4">
+        <div class="card shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h4 class="mb-3">Add Funds to Wallet</h4>
+
+                <form asp-action="TopUpWallet" method="post">
+                    <input type="hidden" name="studentId" value="@Model.User.Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="Enter amount" />
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        @foreach (var amount in new[] { 10, 25, 50, 100 })
+                        {
+                            <div class="col-3">
+                                <button type="button"
+                                        onclick="document.querySelector('input[name=amount]').value='@amount'"
+                                        class="btn btn-outline-secondary w-100">
+                                    $@amount
+                                </button>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="form-check d-flex align-items-center">
+                                <input class="form-check-input me-2" type="radio" name="payment" value="card" checked>
+                                <label class="form-check-label d-flex align-items-center">
+                                    <i class="bi bi-credit-card fs-5 text-primary me-2"></i>
+                                    <div>
+                                        <p class="fw-bold mb-0">Credit/Debit Card</p>
+                                        <small class="text-muted">Pay with your card</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary flex-fill"
+                                data-bs-toggle="collapse" data-bs-target="#topUpForm">
+                            Cancel
+                        </button>
+
+                        <button type="submit" class="btn btn-primary flex-fill fw-bold">
+                            Add Funds
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="card shadow-sm rounded-4 border mb-5">
+        <div class="card-body p-4">
+            <h4 class="mb-3">Transaction History</h4>
+
+            <div class="vstack gap-3">
+                @foreach (var t in Model.Transactions)
+                {
+                    <div class="transaction-item d-flex justify-content-between align-items-center p-3 rounded-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 rounded transaction-icon"
+                                 style="background:@(t.Type==TransactionType.WalletTopUp ? "#d1fae5" :
+                                                                                                   t.Type == TransactionType.Reservation ? "#dbeafe" : "#ede9fe");">
+                                @if (t.Type == TransactionType.WalletTopUp)
+                                {
+                                    <i class="bi bi-arrow-up-circle text-success"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-arrow-down-circle text-primary"></i>
+                                }
+                        </div>
+                        <div>
+                            <p class="fw-bold text-dark mb-0">
+                                @(t.Type == TransactionType.WalletTopUp ? "Wallet Recharge"
+                                                                : t.Type == TransactionType.Reservation ? "Meal Reservation" : "Refund")
+                                </p>
+                                <p class="text-muted mb-0">@t.Description</p>
+                                <small class="text-secondary">@t.Date.ToString("MMM dd, yyyy")</small>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <p class="fw-bold @(t.Type == TransactionType.WalletTopUp ? "text-success" : "text-danger") mb-1">
+                                @(t.Type == TransactionType.WalletTopUp ? "+" : "-")$@Math.Abs(t.Amount).ToString("0.00")
+                            </p>
+                            <span class="badge @(t.Status == TransactionStatus.Success ? "bg-success bg-opacity-25 text-success" :
+                                                                                   t.Status == TransactionStatus.Failed ? "bg-danger bg-opacity-25 text-danger" :
+                                                                                   "bg-warning bg-opacity-25 text-warning")">
+                                @t.Status
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    /* ---------- Wallet Balance Card ---------- */
+    .wallet-balance-card {
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        border-radius: 25px;
+        padding: 24px;
+        box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+    }
+
+    .wallet-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.25);
+    }
+
+    /* ---------- Quick Stats ---------- */
+    .stat-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid #e6e6e6;
+    }
+
+    .stat-icon {
+        padding: 8px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+    }
+
+    /* ---------- Transaction History ---------- */
+    .transaction-item {
+        background: #f8f9fa;
+        transition: .2s;
+        border-radius: 16px; 
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .transaction-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.07);
+        }
+
+    .transaction-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        border-radius: 12px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .transaction-item > div > div:last-child {
+        border-radius: 12px; 
+        padding: 4px 6px;
+    }
+
+    .card.shadow-sm.rounded-4.border.mb-5 {
+        border-radius: 24px !important;
+    }
+
+
+    /* ---------- Buttons ---------- */
+    .btn-outline-secondary {
+        border-radius: 10px;
+        transition: .2s;
+    }
+
+        .btn-outline-secondary:hover {
+            background: #f3f4f6;
+            color: #333;
+        }
+
+    .btn-primary {
+        border-radius: 10px;
+        transition: .2s;
+    }
+
+        .btn-primary:disabled {
+            background: #b8c2ff !important;
+            border-color: #b8c2ff !important;
+            cursor: not-allowed;
+            opacity: .8;
+        }
+</style>

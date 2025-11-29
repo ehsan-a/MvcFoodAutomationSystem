@@ -1,0 +1,242 @@
+﻿@using Domain.Entities
+@model IEnumerable<Transaction>
+
+@{
+    ViewData["Title"] = "Payment Management";
+
+    var searchQuery = Context.Request.Query["search"];
+    var selectedType = Context.Request.Query["type"];
+    var selectedStatus = Context.Request.Query["status"];
+
+    var filtered = Model
+        .Where(t =>
+            (string.IsNullOrEmpty(searchQuery) ||
+                t.User.LastName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                t.Id.ToString().Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+            &&
+            (string.IsNullOrEmpty(selectedType) || selectedType == "all" || t.Type.ToString().Equals(selectedType, StringComparison.OrdinalIgnoreCase))
+            &&
+            (string.IsNullOrEmpty(selectedStatus) || selectedStatus == "all" || t.Status.ToString().Equals(selectedStatus, StringComparison.OrdinalIgnoreCase))
+        )
+        .ToList();
+
+    var totalRevenue = Model
+        .Where(t => t.Type == TransactionType.Reservation && t.Status == TransactionStatus.Success)
+        .Sum(t => Math.Abs(t.Amount));
+
+    var totalTopups = Model
+        .Where(t => t.Type == TransactionType.WalletTopUp && t.Status == TransactionStatus.Success)
+        .Sum(t => t.Amount);
+
+    var failedCount = Model.Count(t => t.Status == TransactionStatus.Failed);
+}
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
+        <div>
+            <h2 class="mb-1 fw-bold">Payment Management</h2>
+            <p class="text-muted mb-0">Track all transactions and wallet activities</p>
+        </div>
+
+        <a class="btn btn-outline-secondary rounded-pill d-flex align-items-center gap-2">
+            <i class="bi bi-download"></i> Export to Excel
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="nice-card p-4">
+                <p class="text-muted mb-1">Total Revenue</p>
+                <h4>$@(totalRevenue)</h4>
+                <span class="text-success">+12% from last month</span>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="nice-card p-4">
+                <p class="text-muted mb-1">Wallet Top-ups</p>
+                <h4>$@totalTopups</h4>
+                <span class="text-primary">+8% from last month</span>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="nice-card p-4">
+                <p class="text-muted mb-1">Failed Payments</p>
+                <h4>@failedCount</h4>
+                <span class="text-danger">-2 from last week</span>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="nice-card p-4">
+                <p class="text-muted mb-1">Success Rate</p>
+                <h4>96.5%</h4>
+                <span class="text-purple">+2% improvement</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Apply -->
+    <form method="get" class="nice-card p-4 mb-4">
+        <div class="row g-3 align-items-end">
+
+            <div class="col-md-4">
+                <div class="input-group rounded-pill overflow-hidden">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" name="search" placeholder="Search..." value="@searchQuery" />
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <select name="type" class="form-select rounded-pill">
+                    <option value="all">All Types</option>
+                    <option value="reservation">Reservation</option>
+                    <option value="wallet_topup">Wallet Top-up</option>
+                    <option value="refund">Refund</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="status" class="form-select rounded-pill">
+                    <option value="all">All Status</option>
+                    <option value="success">Success</option>
+                    <option value="failed">Failed</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+
+            <div class="col-md-1 d-grid">
+                <button class="btn btn-primary rounded-pill">Apply</button>
+            </div>
+
+        </div>
+    </form>
+
+    <!-- Transactions Table -->
+    <div class="nice-card overflow-hidden">
+        <div class="table-responsive">
+            <table class="table modern-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Student</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in filtered)
+                    {
+                        <tr>
+                            <td>@t.Id</td>
+                            <td>
+                                <strong>@t.User.LastName</strong><br />
+                                <small class="text-muted">@t.UserId</small>
+                            </td>
+                            <td>
+                                @if (t.Type == TransactionType.WalletTopUp)
+                                {
+                                    <span class="pill-badge bg-primary text-white">Wallet Top-up</span>
+                                }
+                                else if (t.Type == TransactionType.Reservation)
+                                {
+                                    <span class="pill-badge bg-purple text-white">Reservation</span>
+                                }
+                                else
+                                {
+                                    <span class="pill-badge bg-success text-white">Refund</span>
+                                }
+                            </td>
+                            <td>@t.Description</td>
+                            <td>@t.Date.ToString("MMM dd, yyyy")</td>
+                            <td class="@(t.Type == TransactionType.WalletTopUp ? "text-success" : "text-danger")">
+                                @(t.Type == TransactionType.WalletTopUp ? "+" : "-")$@Math.Abs(t.Amount).ToString("F2")
+                            </td>
+                            <td>
+                                @if (t.Status == TransactionStatus.Success)
+                                {
+                                    <span class="pill-badge bg-success text-white">Success</span>
+                                }
+                                else if (t.Status == TransactionStatus.Failed)
+                                {
+                                    <span class="pill-badge bg-danger text-white">Failed</span>
+                                }
+                                else
+                                {
+                                    <span class="pill-badge bg-warning text-dark">Pending</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center border-top px-4 py-3">
+            <span class="text-muted">Showing @filtered.Count transactions</span>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>Previous</button>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    /* White cards & rounded */
+    .nice-card {
+        background: #ffffff !important;
+        border-radius: 22px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        padding: 1.5rem !important;
+    }
+
+    /* Table styling */
+    .modern-table {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+        .modern-table thead th {
+            border-bottom: 2px solid #f0f0f0;
+            background: #ffffff;
+        }
+
+        .modern-table tbody tr {
+            background: #ffffff;
+            border-bottom: 1px solid #f3f3f3;
+            transition: 0.2s;
+        }
+
+            .modern-table tbody tr:hover {
+                background: #f7faff !important;
+            }
+
+    /* Inputs & selects */
+    .form-control,
+    .form-select,
+    .input-group-text {
+        background: #ffffff !important;
+        border: 1px solid #e3e3e3 !important;
+        border-radius: 20px !important;
+    }
+
+    /* Badges */
+    .pill-badge {
+        padding: 0.35rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+
+    /* Input group fix */
+    .input-group-text {
+        border-right: none !important;
+    }
+</style>

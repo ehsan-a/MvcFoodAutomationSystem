@@ -1,0 +1,173 @@
+﻿@using Domain.Entities
+@using FoodAutomationSystem.ViewModels
+@model ReservationFlowViewModel
+@{
+    var user = Model.User;
+    var foodMenu = Model.FoodMenu;
+    var date = Model.Date;
+    var step = Model.Step; // "confirm", "processing", "success"
+    var WalletBalance = Model.WalletBalance;
+}
+
+<div class="container py-5">
+
+    <div class="reservation-page-card mx-auto shadow-sm rounded-4 p-4 p-md-5">
+
+        @if (step == ReservationStatus.Confirmed)
+        {
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <div class="icon-circle bg-primary bg-opacity-10 mb-3">
+                    <i class="bi bi-utensils fs-3 text-primary"></i>
+                </div>
+                <h3 class="fw-bold mb-1">Confirm Reservation</h3>
+                <p class="text-muted mb-4">Review your order details</p>
+            </div>
+
+            <!-- Meal Info -->
+            <div class="info-card mb-3">
+                <h6 class="mb-1">Meal</h6>
+                <p class="mb-1 fw-semibold">@foodMenu.Food.Title</p>
+                <p class="text-muted mb-0">@foodMenu.Food.Description</p>
+            </div>
+
+            <!-- Date & Time -->
+            <div class="info-card mb-3">
+                <h6 class="mb-1">Date & Time</h6>
+                <p class="mb-0"><i class="bi bi-calendar me-1"></i> @date.ToString("dddd, MMMM dd, yyyy")</p>
+                <small class="text-muted">
+                    @(foodMenu.Food.Type == FoodType.Breakfast ? "7:00 AM - 9:00 AM" : foodMenu.Food.Type == FoodType.Lunch ? "12:00 PM - 2:00 PM" : "6:00 PM - 8:00 PM")
+                </small>
+            </div>
+
+            <!-- Wallet Info -->
+            <div class="info-card mb-3">
+                <div class="d-flex justify-content-between">
+                    <span>Current Balance</span>
+                    <span>$@WalletBalance.ToString("F2")</span>
+                </div>
+                <div class="d-flex justify-content-between mt-2 border-top pt-2">
+                    <span>After Payment</span>
+                    <span>$@((WalletBalance - foodMenu.UnitPrice).ToString("F2"))</span>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="info-card bg-primary bg-opacity-10 mb-3">
+                <div class="d-flex justify-content-between">
+                    <span>Total Amount</span>
+                    <span class="text-primary fw-bold">$@foodMenu.UnitPrice.ToString("F2")</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex flex-column flex-md-row gap-3">
+                <button class="btn btn-outline-secondary flex-fill" onclick="onCancel()">Cancel</button>
+              
+                <form asp-controller="Transactions" asp-action="Payment" method="post">
+
+                    <input name="UserId" value="@user.Id" type="hidden" />
+                    <input name="Amount" value="@foodMenu.UnitPrice" type="hidden" />
+                    <input name="FoodMenuId" value="@foodMenu.Id" type="hidden" />
+                   
+
+                    <button class="btn btn-primary flex-fill" @(WalletBalance < foodMenu.UnitPrice ? "disabled" : "")>
+                        Confirm & Pay <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </form>
+            </div>
+
+            @if (WalletBalance < foodMenu.UnitPrice)
+            {
+                <p class="text-danger text-center mt-2">Insufficient wallet balance</p>
+            }
+        }
+        else if (step == ReservationStatus.Processing)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <h5 class="mb-2">Processing Payment</h5>
+                <p class="text-muted">Please wait while we confirm your reservation...</p>
+            </div>
+        }
+        else if (step == ReservationStatus.Completed)
+        {
+            <div class="text-center py-5">
+                <div class="icon-circle bg-success bg-opacity-10 mb-3">
+                    <i class="bi bi-check-lg fs-3 text-success"></i>
+                </div>
+                <h5 class="mb-2">Reservation Confirmed!</h5>
+                <p class="text-muted mb-3">Your meal has been reserved successfully</p>
+                <div class="info-card bg-success bg-opacity-10 p-3">
+                    <p class="mb-0">A QR code ticket has been generated. Present it at the cafeteria to collect your meal.</p>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+<script>
+    function onCancel() {
+
+        window.history.back();
+    }
+    function onConfirm() {
+
+        alert("Reservation confirmed! (replace with actual action)");
+    }
+</script>
+
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background: #f8f9fa;
+    }
+
+    .reservation-page-card {
+        max-width: 600px;
+        background: #ffffff;
+        border-radius: 22px;
+        padding: 2rem;
+        box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+        transition: 0.25s;
+    }
+
+        .reservation-page-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.1);
+        }
+
+    .icon-circle {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .info-card {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 1rem;
+        border: 1px solid #e6e6e6;
+    }
+
+    .btn-primary {
+        border-radius: 12px;
+        transition: 0.2s;
+    }
+
+    .btn-outline-secondary {
+        border-radius: 12px;
+        transition: 0.2s;
+    }
+
+    .btn-primary:disabled {
+        background: #b8c2ff !important;
+        border-color: #b8c2ff !important;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+</style>
