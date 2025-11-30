@@ -1,57 +1,61 @@
 ﻿using Application.Interfaces;
-using Application.Specifications;
+using Application.Specifications.FoodMenus;
 using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
     public class FoodMenuService : IFoodMenuService
     {
-        private readonly IGenericRepository<FoodMenu> _repository;
-        public FoodMenuService(IGenericRepository<FoodMenu> repository)
+        private readonly IUnitOfWork _unitOfWork;
+        public FoodMenuService(IUnitOfWork unitOfWork)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
         }
-        public async Task CreateAsync(FoodMenu foodMenu)
+        public async Task CreateAsync(FoodMenu foodMenu, CancellationToken cancellationToken)
         {
-            await _repository.AddAsync(foodMenu);
+            await _unitOfWork.FoodMenus.AddAsync(foodMenu, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new FoodMenusSpec();
-            var item = await _repository.GetByIdAsync(id, spec);
+            var item = await _unitOfWork.FoodMenus.GetByIdAsync(id, spec, cancellationToken);
             if (item == null) return;
-            await _repository.DeleteAsync(item);
+            _unitOfWork.FoodMenus.Delete(item);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<FoodMenu>> GetAllAsync()
+        public async Task<IEnumerable<FoodMenu>> GetAllAsync(CancellationToken cancellationToken)
         {
             var spec = new FoodMenusSpec();
-            return await _repository.GetAllAsync(spec);
+            return await _unitOfWork.FoodMenus.GetAllAsync(spec, cancellationToken);
         }
 
-        public async Task<FoodMenu?> GetByIdAsync(int id)
+        public async Task<FoodMenu?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new FoodMenusSpec();
-            return await _repository.GetByIdAsync(id, spec);
+            return await _unitOfWork.FoodMenus.GetByIdAsync(id, spec, cancellationToken);
         }
 
-        public async Task UpdateAsync(FoodMenu foodMenu)
+        public async Task UpdateAsync(FoodMenu foodMenu, CancellationToken cancellationToken)
         {
-            await _repository.UpdateAsync(foodMenu);
+            _unitOfWork.FoodMenus.Update(foodMenu);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task<bool> ExistsAsync(int id)
+        public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new FoodMenusSpec();
-            return await _repository.ExistsAsync(id, spec);
+            return await _unitOfWork.FoodMenus.ExistsAsync(id, spec, cancellationToken);
         }
-        public async Task<IEnumerable<FoodMenu>> GetByDateAsync(DateOnly date)
+        public async Task<IEnumerable<FoodMenu>> GetByDateAsync(DateOnly date, CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).Where(x => x.Menu.WeekStartDate.AddDays((int)x.DayOfWeek) == date);
+            var spec = new FoodMenuByDateSpec(date);
+            return await _unitOfWork.FoodMenus.GetAllAsync(spec, cancellationToken);
         }
-        public async Task<FoodMenu?> GetByIdTypeDateAsync(int id, FoodType foodType, DateTime date)
+        public async Task<FoodMenu?> GetByIdTypeDateAsync(int id, FoodType foodType, DateTime date, CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).FirstOrDefault(m => m.MenuId == id && m.Food.Type == foodType && m.DayOfWeek == date.DayOfWeek);
+            var spec = new FoodMenuByIdTypeDateSpec(id, foodType, date);
+            return (await _unitOfWork.FoodMenus.GetAllAsync(spec, cancellationToken)).FirstOrDefault();
         }
     }
 }

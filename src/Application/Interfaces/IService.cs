@@ -2,11 +2,11 @@
 {
     public interface IService<T>
     {
-        Task<IEnumerable<T>> GetAllAsync();
-        Task<T?> GetByIdAsync(int id);
-        Task CreateAsync(T entity);
-        Task UpdateAsync(T entity);
-        Task DeleteAsync(int id);
-        Task<bool> ExistsAsync(int id);
+        Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken);
+        Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken);
+        Task CreateAsync(T entity, CancellationToken cancellationToken);
+        Task UpdateAsync(T entity, CancellationToken cancellationToken);
+        Task DeleteAsync(int id, CancellationToken cancellationToken);
+        Task<bool> ExistsAsync(int id, CancellationToken cancellationToken);
     }
 }

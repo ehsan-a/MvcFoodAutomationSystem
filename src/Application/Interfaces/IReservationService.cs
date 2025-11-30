@@ -4,9 +4,9 @@ namespace Application.Interfaces
 {
     public interface IReservationService : IService<Reservation>
     {
-        Task<IEnumerable<Reservation>> GetTodayReservationsAsync();
-        Task<IEnumerable<Reservation>> GetWeeklyReservationsAsync();
-        Task<IEnumerable<Reservation>> GetUpcomingReservationsAsync(string userId);
-        Task<IEnumerable<Reservation>> GetByUserId(string userId);
+        Task<IEnumerable<Reservation>> GetTodayReservationsAsync(CancellationToken cancellationToken);
+        Task<IEnumerable<Reservation>> GetWeeklyReservationsAsync(CancellationToken cancellationToken);
+        Task<IEnumerable<Reservation>> GetUpcomingReservationsAsync(string userId, CancellationToken cancellationToken);
+        Task<IEnumerable<Reservation>> GetByUserId(string userId, CancellationToken cancellationToken);
     }
 }

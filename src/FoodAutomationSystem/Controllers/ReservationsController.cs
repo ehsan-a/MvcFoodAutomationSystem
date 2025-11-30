@@ -21,11 +21,11 @@ namespace FoodAutomationSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("FoodMenuId,UserId,TransactionId")] Reservation reservation)
+        public async Task<IActionResult> Create([Bind("FoodMenuId,UserId,TransactionId")] Reservation reservation, CancellationToken cancellationToken)
         {
             if (ModelState.IsValid)
             {
-                await _service.CreateAsync(reservation);
+                await _service.CreateAsync(reservation, cancellationToken);
                 var user = await _userManager.GetUserAsync(User);
                 var roles = await _userManager.GetRolesAsync(user);
 
@@ -46,7 +46,7 @@ namespace FoodAutomationSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FoodMenuId,UserId,Date")] Reservation reservation)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FoodMenuId,UserId,Date")] Reservation reservation, CancellationToken cancellationToken)
         {
             if (id != reservation.Id)
             {
@@ -57,11 +57,11 @@ namespace FoodAutomationSystem.Controllers
             {
                 try
                 {
-                    await _service.UpdateAsync(reservation);
+                    await _service.UpdateAsync(reservation, cancellationToken);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (await ReservationExists(reservation.Id) == false)
+                    if (await ReservationExists(reservation.Id, cancellationToken) == false)
                     {
                         return NotFound();
                     }
@@ -78,15 +78,15 @@ namespace FoodAutomationSystem.Controllers
         // POST: Reservations/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
         {
-            await _service.DeleteAsync(id);
+            await _service.DeleteAsync(id, cancellationToken);
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task<bool> ReservationExists(int id)
+        private async Task<bool> ReservationExists(int id, CancellationToken cancellationToken)
         {
-            return await _service.ExistsAsync(id);
+            return await _service.ExistsAsync(id, cancellationToken);
         }
     }
 }

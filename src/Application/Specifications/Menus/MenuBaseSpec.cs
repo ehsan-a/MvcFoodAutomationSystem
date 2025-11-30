@@ -5,13 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Specifications
+namespace Application.Specifications.Menus
 {
-    public class TransactionsSpec : Specification<Transaction>
+    public abstract class MenuBaseSpec : Specification<Menu>
     {
-        public TransactionsSpec()
+        protected MenuBaseSpec()
         {
-            AddInclude(m => m.User);
+            AddInclude(m => m.FoodMenus);
         }
     }
 }

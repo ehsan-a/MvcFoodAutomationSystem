@@ -7,7 +7,6 @@ namespace Application.Specifications
     {
         public Expression<Func<T, bool>>? Criteria { get; protected set; }
         public List<Expression<Func<T, object>>> Includes { get; } = new();
-        public List<string> IncludeStrings { get; } = new();
         public Expression<Func<T, object>>? OrderBy { get; protected set; }
         public Expression<Func<T, object>>? OrderByDescending { get; protected set; }
         public int? Take { get; protected set; }
@@ -16,9 +15,6 @@ namespace Application.Specifications
 
         protected void AddInclude(Expression<Func<T, object>> includeExpression)
             => Includes.Add(includeExpression);
-
-        protected void AddInclude(string includeString)
-      => IncludeStrings.Add(includeString);
 
         protected void AddCriteria(Expression<Func<T, bool>> criteria)
             => Criteria = criteria;

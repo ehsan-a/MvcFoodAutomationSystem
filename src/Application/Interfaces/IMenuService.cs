@@ -4,6 +4,6 @@ namespace Application.Interfaces
 {
     public interface IMenuService : IService<Menu>
     {
-        Task<Menu?> GetByDate(DateTime date);
+        Task<Menu?> GetByDateAsync(DateTime date, CancellationToken cancellationToken);
     }
 }

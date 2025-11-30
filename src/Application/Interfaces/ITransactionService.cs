@@ -4,10 +4,10 @@ namespace Application.Interfaces
 {
     public interface ITransactionService : IService<Transaction>
     {
-        Task<decimal> GetTotalRevenueAsync();
-        Task<double> GetSuccessRateAsync();
-        Task<IEnumerable<Transaction>> GetFailedPaymentsAsync();
-        Task<decimal> GetUserBalanceAsync(string id);
-        Task<IEnumerable<Transaction>> GetByUserIdAsync(string userId);
+        Task<decimal> GetTotalRevenueAsync(CancellationToken cancellationToken);
+        Task<double> GetSuccessRateAsync(CancellationToken cancellationToken);
+        Task<IEnumerable<Transaction>> GetFailedPaymentsAsync(CancellationToken cancellationToken);
+        Task<decimal> GetUserBalanceAsync(string userId, CancellationToken cancellationToken);
+        Task<IEnumerable<Transaction>> GetByUserIdAsync(string userId, CancellationToken cancellationToken);
     }
 }

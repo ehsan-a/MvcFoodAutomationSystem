@@ -20,18 +20,18 @@ namespace FoodAutomationSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Amount,Description,Type,Status,UserId")] Transaction transaction)
+        public async Task<IActionResult> Create([Bind("Amount,Description,Type,Status,UserId")] Transaction transaction, CancellationToken cancellationToken)
         {
             if (ModelState.IsValid)
             {
-                await _service.CreateAsync(transaction);
+                await _service.CreateAsync(transaction, cancellationToken);
                 return RedirectToAction(nameof(Index));
             }
             return View(transaction);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Payment([Bind("UserId,FoodMenuId,Amount")] ReservationDataViewModel reservationDataViewModel)
+        public async Task<IActionResult> Payment([Bind("UserId,FoodMenuId,Amount")] ReservationDataViewModel reservationDataViewModel, CancellationToken cancellationToken)
         {
             if (ModelState.IsValid)
             {
@@ -43,7 +43,7 @@ namespace FoodAutomationSystem.Controllers
                     Status = TransactionStatus.Success,
                     UserId = reservationDataViewModel.UserId,
                 };
-                await _service.CreateAsync(transaction);
+                await _service.CreateAsync(transaction, cancellationToken);
                 reservationDataViewModel.TransactionId = transaction.Id;
                 return View("PostRedirect", reservationDataViewModel);
             }
@@ -55,7 +55,7 @@ namespace FoodAutomationSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Amount,Date,Description,Type,Status,UserId")] Transaction transaction)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Amount,Date,Description,Type,Status,UserId")] Transaction transaction, CancellationToken cancellationToken)
         {
             if (id != transaction.Id)
             {
@@ -66,11 +66,11 @@ namespace FoodAutomationSystem.Controllers
             {
                 try
                 {
-                    await _service.UpdateAsync(transaction);
+                    await _service.UpdateAsync(transaction, cancellationToken);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (await TransactionExists(transaction.Id) == false)
+                    if (await TransactionExists(transaction.Id, cancellationToken) == false)
                     {
                         return NotFound();
                     }
@@ -87,15 +87,15 @@ namespace FoodAutomationSystem.Controllers
         // POST: Transactions/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
         {
-            await _service.DeleteAsync(id);
+            await _service.DeleteAsync(id, cancellationToken);
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task<bool> TransactionExists(int id)
+        private async Task<bool> TransactionExists(int id, CancellationToken cancellationToken)
         {
-            return await _service.ExistsAsync(id);
+            return await _service.ExistsAsync(id, cancellationToken);
         }
     }
 }

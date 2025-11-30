@@ -22,7 +22,7 @@ namespace FoodAutomationSystem.Controllers
             _reservationService = reservationService;
             _menuService = menuService;
         }
-        public async Task<IActionResult> Overview()
+        public async Task<IActionResult> Overview(CancellationToken cancellationToken)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user != null)
@@ -31,26 +31,26 @@ namespace FoodAutomationSystem.Controllers
                 var model = new UserOverviewViewModel
                 {
                     User = user,
-                    TomorrowsFoodMenus = (await _foodMenuService.GetByDateAsync(tomorrow)).ToList(),
-                    UpcomingReservations = (await _reservationService.GetUpcomingReservationsAsync(user.Id)).ToList(),
-                    WalletBalance = await _transactionService.GetUserBalanceAsync(user.Id)
+                    TomorrowsFoodMenus = (await _foodMenuService.GetByDateAsync(tomorrow, cancellationToken)).ToList(),
+                    UpcomingReservations = (await _reservationService.GetUpcomingReservationsAsync(user.Id, cancellationToken)).ToList(),
+                    WalletBalance = await _transactionService.GetUserBalanceAsync(user.Id, cancellationToken)
                 };
                 return View(model);
             }
             return NotFound();
         }
 
-        public async Task<IActionResult> WeeklyMenu(string date)
+        public async Task<IActionResult> WeeklyMenu(string date, CancellationToken cancellationToken)
         {
             var selectedDate = string.IsNullOrEmpty(date) ? DateTime.Now.AddDays(1).Date : DateTime.Parse(date);
-            var menu = await _menuService.GetByDate(selectedDate);
+            var menu = await _menuService.GetByDateAsync(selectedDate, cancellationToken);
             if (menu == null) return NotFound();
             var dates = Enumerable.Range(0, 7).Select(i => menu.WeekStartDate.AddDays(i).ToString("yyyy-MM-dd")).ToList();
             FoodMenu breakfast = null;
-            var query = await _foodMenuService.GetByIdTypeDateAsync(menu.Id, FoodType.Breakfast, selectedDate);
+            var query = await _foodMenuService.GetByIdTypeDateAsync(menu.Id, FoodType.Breakfast, selectedDate, cancellationToken);
             if (query != null) breakfast = query;
             FoodMenu lunch = null;
-            query = await _foodMenuService.GetByIdTypeDateAsync(menu.Id, FoodType.Lunch, selectedDate);
+            query = await _foodMenuService.GetByIdTypeDateAsync(menu.Id, FoodType.Lunch, selectedDate, cancellationToken);
             if (query != null) lunch = query;
             bool deadlinePassed = DateTime.Now > selectedDate;
             var vm = new WeeklyMenuViewModel
@@ -63,47 +63,47 @@ namespace FoodAutomationSystem.Controllers
             };
             return View(vm);
         }
-        public async Task<IActionResult> Wallet()
+        public async Task<IActionResult> Wallet(CancellationToken cancellationToken)
         {
 
             var user = await _userManager.GetUserAsync(User);
             var vm = new UserWalletViewModel
             {
                 User = user,
-                Transactions = (await _transactionService.GetByUserIdAsync(user.Id)).ToList(),
-                WalletBalance = await _transactionService.GetUserBalanceAsync(user.Id)
+                Transactions = (await _transactionService.GetByUserIdAsync(user.Id, cancellationToken)).ToList(),
+                WalletBalance = await _transactionService.GetUserBalanceAsync(user.Id, cancellationToken)
             };
             return View(vm);
         }
 
-        public async Task<IActionResult> MyReservations()
+        public async Task<IActionResult> MyReservations(CancellationToken cancellationToken)
         {
             var user = await _userManager.GetUserAsync(User);
             var vm = new UserReservationsViewModel
             {
                 User = user,
-                Reservations = (await _reservationService.GetByUserId(user.Id)).ToList()
+                Reservations = (await _reservationService.GetByUserId(user.Id, cancellationToken)).ToList()
             };
             return View(vm);
         }
 
         [HttpPost]
-        public async Task<IActionResult> ReservationFlow(int foodMenuId, string date)
+        public async Task<IActionResult> ReservationFlow(int foodMenuId, string date, CancellationToken cancellationToken)
         {
             var user = await _userManager.GetUserAsync(User);
             var vm = new ReservationFlowViewModel
             {
                 User = user,
-                FoodMenu = await _foodMenuService.GetByIdAsync(foodMenuId),
+                FoodMenu = await _foodMenuService.GetByIdAsync(foodMenuId, cancellationToken),
                 Date = DateTime.Parse(date),
-                WalletBalance = await _transactionService.GetUserBalanceAsync(user.Id)
+                WalletBalance = await _transactionService.GetUserBalanceAsync(user.Id, cancellationToken)
             };
             return View(vm);
         }
 
-        public async Task<IActionResult> FoodDetails(int id)
+        public async Task<IActionResult> FoodDetails(int id, CancellationToken cancellationToken)
         {
-            var foodMenu = await _foodMenuService.GetByIdAsync(id);
+            var foodMenu = await _foodMenuService.GetByIdAsync(id, cancellationToken);
             if (foodMenu == null) return NotFound();
             var date = foodMenu.Menu.WeekStartDate.AddDays((int)foodMenu.DayOfWeek);
             var vm = new FoodMenuViewModel
@@ -116,20 +116,20 @@ namespace FoodAutomationSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> QRTicket(int id)
+        public async Task<IActionResult> QRTicket(int id, CancellationToken cancellationToken)
         {
             var vm = new QRTicketViewModel
             {
-                Reservation = await _reservationService.GetByIdAsync(id),
+                Reservation = await _reservationService.GetByIdAsync(id, cancellationToken),
             };
             return View(vm);
         }
 
-        public async Task<IActionResult> ReservationSuccess(int id)
+        public async Task<IActionResult> ReservationSuccess(int id, CancellationToken cancellationToken)
         {
             var vm = new QRTicketViewModel
             {
-                Reservation = await _reservationService.GetByIdAsync(id),
+                Reservation = await _reservationService.GetByIdAsync(id, cancellationToken),
             };
             return View(vm);
         }

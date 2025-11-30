@@ -1,10 +1,11 @@
-using Domain.Entities;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Infrastructure.Persistence;
-using Infrastructure.Repositories;
 using Application.Interfaces;
 using Application.Services;
+using Domain.Entities;
+using Infrastructure.Persistence;
+using Infrastructure.Repositories;
+using Infrastructure.UnitOfWork;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<FoodAutomationSystemContext>(options =>
@@ -16,11 +17,8 @@ builder.Services
     .AddDefaultUI()
     .AddDefaultTokenProviders();
 
-builder.Services.AddScoped<IGenericRepository<Food>, GenericRepository<Food>>();
-builder.Services.AddScoped<IGenericRepository<FoodMenu>, GenericRepository<FoodMenu>>();
-builder.Services.AddScoped<IGenericRepository<Menu>, GenericRepository<Menu>>();
-builder.Services.AddScoped<IGenericRepository<Reservation>, GenericRepository<Reservation>>();
-builder.Services.AddScoped<IGenericRepository<Transaction>, GenericRepository<Transaction>>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IService<Food>, FoodService>();
 builder.Services.AddScoped<IService<Menu>, MenuService>();

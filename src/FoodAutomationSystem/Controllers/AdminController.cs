@@ -1,11 +1,12 @@
-﻿using Domain.Entities;
+﻿using Application.Interfaces;
+using Domain.Entities;
+using FoodAutomationSystem.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using FoodAutomationSystem.ViewModels;
+using System.Threading;
 
 namespace FoodAutomationSystem.Controllers
 {
@@ -25,36 +26,36 @@ namespace FoodAutomationSystem.Controllers
             _menuService = menuService;
         }
 
-        public async Task<IActionResult> Dashboard()
+        public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
         {
             var vm = new AdminDashboardViewModel
             {
-                TodayReservations = (await _reservationService.GetTodayReservationsAsync()).Count(),
-                TotalRevenue = await _transactionService.GetTotalRevenueAsync(),
+                TodayReservations = (await _reservationService.GetTodayReservationsAsync(cancellationToken)).Count(),
+                TotalRevenue = await _transactionService.GetTotalRevenueAsync(cancellationToken),
                 ActiveStudents = _userManager.Users.Count(),
-                WeeklyReservations = (await _reservationService.GetWeeklyReservationsAsync()).Count(),
-                SuccessRate = await _transactionService.GetSuccessRateAsync(),
-                FailedPayments = (await _transactionService.GetFailedPaymentsAsync()).Count(),
-                TodayReservationsList = (await _reservationService.GetTodayReservationsAsync()).ToList(),
-                WeeklyData = (await _reservationService.GetWeeklyReservationsAsync()).GroupBy(x => x.Date)
+                WeeklyReservations = (await _reservationService.GetWeeklyReservationsAsync(cancellationToken)).Count(),
+                SuccessRate = await _transactionService.GetSuccessRateAsync(cancellationToken),
+                FailedPayments = (await _transactionService.GetFailedPaymentsAsync(cancellationToken)).Count(),
+                TodayReservationsList = (await _reservationService.GetTodayReservationsAsync(cancellationToken)).ToList(),
+                WeeklyData = (await _reservationService.GetWeeklyReservationsAsync(cancellationToken)).GroupBy(x => x.Date)
                 .Select(x => new WeeklyData { Name = x.Key.DayOfWeek.ToString(), Value = x.Count() }).ToList(),
                 FoodTypeData = [
-                    new FoodTypeData{Name="Breakfast",Value=(await _foodService.GetAllAsync()).Count(x=>x.Type==FoodType.Breakfast),Color="#3b82f6"},
-                    new FoodTypeData{Name="Luanch",Value=(await _foodService.GetAllAsync()).Count(x=>x.Type==FoodType.Lunch),Color="#ef4444"}
+                    new FoodTypeData{Name="Breakfast",Value=(await _foodService.GetAllAsync(cancellationToken)).Count(x=>x.Type==FoodType.Breakfast),Color="#3b82f6"},
+                    new FoodTypeData{Name="Luanch",Value=(await _foodService.GetAllAsync(cancellationToken)).Count(x=>x.Type==FoodType.Lunch),Color="#ef4444"}
                     ],
             };
             return View(vm);
         }
 
-        public async Task<IActionResult> MenuManagement(string SelectedWeeklyMenuId)
+        public async Task<IActionResult> MenuManagement(string SelectedWeeklyMenuId, CancellationToken cancellationToken)
         {
             if (SelectedWeeklyMenuId.IsNullOrEmpty())
             {
-                if ((await _menuService.GetAllAsync()).Any())
-                    SelectedWeeklyMenuId = (await _menuService.GetAllAsync()).FirstOrDefault(x => x.WeekStartDate.DayOfYear <= DateTime.Now.AddDays(1).DayOfYear && x.WeekStartDate.AddDays(6).DayOfYear >= DateTime.Now.AddDays(1).DayOfYear).Id.ToString();
+                if ((await _menuService.GetAllAsync(cancellationToken)).Any())
+                    SelectedWeeklyMenuId = (await _menuService.GetAllAsync(cancellationToken)).FirstOrDefault(x => x.WeekStartDate.DayOfYear <= DateTime.Now.AddDays(1).DayOfYear && x.WeekStartDate.AddDays(6).DayOfYear >= DateTime.Now.AddDays(1).DayOfYear).Id.ToString();
                 else return View(new MenuManagementViewModel());
             }
-            var menu = await _menuService.GetByIdAsync(int.Parse(SelectedWeeklyMenuId));
+            var menu = await _menuService.GetByIdAsync(int.Parse(SelectedWeeklyMenuId), cancellationToken);
 
             var vm = new MenuManagementViewModel
             {
@@ -67,14 +68,14 @@ namespace FoodAutomationSystem.Controllers
                .ToList(),
                 SearchQuery = "",
                 SelectedWeeklyMenu = menu,
-                WeeklyMenuOptions = new SelectList(await _menuService.GetAllAsync(), "Id", "WeekStartDate"),
+                WeeklyMenuOptions = new SelectList(await _menuService.GetAllAsync(cancellationToken), "Id", "WeekStartDate"),
                 SelectedWeeklyMenuId = int.Parse(SelectedWeeklyMenuId),
-                AllFoods = (await _foodService.GetAllAsync()).ToList(),
+                AllFoods = (await _foodService.GetAllAsync(cancellationToken)).ToList(),
             };
             return View(vm);
         }
 
-        public async Task<IActionResult> UserManagement()
+        public async Task<IActionResult> UserManagement(CancellationToken cancellationToken)
         {
             var users = await _userManager.Users
                 .Include(x => x.Reservations)
@@ -84,7 +85,7 @@ namespace FoodAutomationSystem.Controllers
 
             foreach (var user in users)
             {
-                var balance = await _transactionService.GetUserBalanceAsync(user.Id);
+                var balance = await _transactionService.GetUserBalanceAsync(user.Id, cancellationToken);
 
                 vm.Add(new UserManagementViewModel
                 {
@@ -95,18 +96,18 @@ namespace FoodAutomationSystem.Controllers
             return View(vm);
 
         }
-        public async Task<IActionResult> FoodManagement()
+        public async Task<IActionResult> FoodManagement(CancellationToken cancellationToken)
         {
-            return View(await _foodService.GetAllAsync());
+            return View(await _foodService.GetAllAsync(cancellationToken));
         }
-        public async Task<IActionResult> ReservationsManagement()
+        public async Task<IActionResult> ReservationsManagement(CancellationToken cancellationToken)
         {
-            return View(await _reservationService.GetAllAsync());
+            return View(await _reservationService.GetAllAsync(cancellationToken));
         }
 
-        public async Task<IActionResult> PaymentManagement()
+        public async Task<IActionResult> PaymentManagement(CancellationToken cancellationToken)
         {
-            return View(await _transactionService.GetAllAsync());
+            return View(await _transactionService.GetAllAsync(cancellationToken));
         }
 
         public IActionResult Setting()

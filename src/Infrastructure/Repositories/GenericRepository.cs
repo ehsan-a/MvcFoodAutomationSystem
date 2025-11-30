@@ -12,40 +12,37 @@ namespace Infrastructure.Repositories
         {
             _context = context;
         }
-        public async Task<IEnumerable<T>> GetAllAsync(ISpecification<T> spec)
+        public async Task<IEnumerable<T>> GetAllAsync(ISpecification<T> spec, CancellationToken cancellationToken = default)
         {
             var queryable = _context.Set<T>().AsQueryable();
             queryable = SpecificationEvaluator<T>.GetQuery(queryable, spec);
-            return await queryable.ToListAsync();
+            return await queryable.ToListAsync(cancellationToken);
         }
 
-        public async Task<T> GetByIdAsync(int id, ISpecification<T> spec)
+        public async Task<T> GetByIdAsync(int id, ISpecification<T> spec, CancellationToken cancellationToken = default)
         {
             var queryable = _context.Set<T>().AsQueryable();
             queryable = SpecificationEvaluator<T>.GetQuery(queryable, spec);
-            return await queryable.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
+            return await queryable.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id, cancellationToken);
         }
 
-        public async Task AddAsync(T entity)
+        public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
         {
-            await _context.Set<T>().AddAsync(entity);
-            await _context.SaveChangesAsync();
+            await _context.Set<T>().AddAsync(entity, cancellationToken);
         }
 
-        public async Task UpdateAsync(T entity)
+        public void Update(T entity)
         {
             _context.Set<T>().Update(entity);
-            await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(T entity)
+        public void Delete(T entity)
         {
             _context.Set<T>().Remove(entity);
-            await _context.SaveChangesAsync();
         }
-        public async Task<bool> ExistsAsync(int id, ISpecification<T> spec)
+        public async Task<bool> ExistsAsync(int id, ISpecification<T> spec, CancellationToken cancellationToken)
         {
-            var entity = await GetByIdAsync(id, spec);
+            var entity = await GetByIdAsync(id, spec, cancellationToken);
             return entity != null;
         }
     }

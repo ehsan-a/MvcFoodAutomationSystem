@@ -1,72 +1,82 @@
 ﻿using Application.Interfaces;
-using Application.Specifications;
+using Application.Specifications.Transactions;
 using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 namespace Application.Services
 {
     public class TransactionService : ITransactionService
     {
-        private readonly IGenericRepository<Transaction> _repository;
-        public TransactionService(IGenericRepository<Transaction> repository)
+        private readonly IUnitOfWork _unitOfWork;
+        public TransactionService(IUnitOfWork unitOfWork)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
         }
-        public async Task CreateAsync(Transaction transaction)
+        public async Task CreateAsync(Transaction transaction, CancellationToken cancellationToken)
         {
-            await _repository.AddAsync(transaction);
+            await _unitOfWork.Transactions.AddAsync(transaction, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new TransactionsSpec();
-            var item = await _repository.GetByIdAsync(id, spec);
+            var item = await _unitOfWork.Transactions.GetByIdAsync(id, spec, cancellationToken);
             if (item == null) return;
-            await _repository.DeleteAsync(item);
+            _unitOfWork.Transactions.Delete(item);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Transaction>> GetAllAsync()
+        public async Task<IEnumerable<Transaction>> GetAllAsync(CancellationToken cancellationToken)
         {
             var spec = new TransactionsSpec();
-            return await _repository.GetAllAsync(spec);
+            return await _unitOfWork.Transactions.GetAllAsync(spec, cancellationToken);
         }
 
-        public async Task<Transaction?> GetByIdAsync(int id)
+        public async Task<Transaction?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new TransactionsSpec();
-            return await _repository.GetByIdAsync(id, spec);
+            return await _unitOfWork.Transactions.GetByIdAsync(id, spec, cancellationToken);
         }
 
-        public async Task UpdateAsync(Transaction transaction)
+        public async Task UpdateAsync(Transaction transaction, CancellationToken cancellationToken)
         {
-            await _repository.UpdateAsync(transaction);
+            _unitOfWork.Transactions.Update(transaction);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task<bool> ExistsAsync(int id)
+        public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new TransactionsSpec();
-            return await _repository.ExistsAsync(id, spec);
+            return await _unitOfWork.Transactions.ExistsAsync(id, spec, cancellationToken);
         }
 
-        public async Task<decimal> GetTotalRevenueAsync()
+        public async Task<decimal> GetTotalRevenueAsync(CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).Where(x => x.Type == TransactionType.Reservation).Sum(x => x.Amount);
+            var spec = new TransactionByTypeSpec(TransactionType.Reservation);
+            return (await _unitOfWork.Transactions.GetAllAsync(spec, cancellationToken))
+                .Where(x => x.Status == TransactionStatus.Success).Sum(x => x.Amount);
         }
-        public async Task<double> GetSuccessRateAsync()
+        public async Task<double> GetSuccessRateAsync(CancellationToken cancellationToken)
         {
-            var total = (await GetAllAsync()).Count();
-            var success = (await GetAllAsync()).Where(x => x.Status == TransactionStatus.Success).Count();
-
+            var spec = new TransactionsSpec();
+            var total = (await _unitOfWork.Transactions.GetAllAsync(spec, cancellationToken)).Count();
+            var spec2 = new TransactionByStatusSpec(TransactionStatus.Success);
+            var success = (await _unitOfWork.Transactions.GetAllAsync(spec2, cancellationToken)).Count();
             return success == 0 ? 0 : (success * 100) / total;
         }
-        public async Task<IEnumerable<Transaction>> GetFailedPaymentsAsync()
+        public async Task<IEnumerable<Transaction>> GetFailedPaymentsAsync(CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).Where(x => x.Status == TransactionStatus.Failed);
+            var spec = new TransactionByStatusSpec(TransactionStatus.Failed);
+            return await _unitOfWork.Transactions.GetAllAsync(spec, cancellationToken);
         }
-        public async Task<decimal> GetUserBalanceAsync(string id)
+        public async Task<decimal> GetUserBalanceAsync(string userId, CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).Where(x => x.UserId == id).Sum(x => (x.Type == TransactionType.Reservation ? -x.Amount : x.Amount));
+            var spec = new TransactionByUser(userId);
+            return (await _unitOfWork.Transactions.GetAllAsync(spec, cancellationToken))
+                .Sum(x => x.Type == TransactionType.Reservation ? -x.Amount : x.Amount);
         }
-        public async Task<IEnumerable<Transaction>> GetByUserIdAsync(string userId)
+        public async Task<IEnumerable<Transaction>> GetByUserIdAsync(string userId, CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).Where(x => x.UserId == userId).OrderByDescending(x => x.Date);
+            var spec = new TransactionByUser(userId);
+            return (await _unitOfWork.Transactions.GetAllAsync(spec, cancellationToken))
+                .OrderByDescending(x => x.Date);
         }
     }
 }

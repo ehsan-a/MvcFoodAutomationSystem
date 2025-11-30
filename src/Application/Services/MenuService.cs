@@ -1,53 +1,56 @@
 ﻿using Application.Interfaces;
-using Application.Specifications;
+using Application.Specifications.Menus;
 using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
     public class MenuService : IMenuService
     {
-        private readonly IGenericRepository<Menu> _repository;
-        public MenuService(IGenericRepository<Menu> repository)
+        private readonly IUnitOfWork _unitOfWork;
+        public MenuService(IUnitOfWork unitOfWork)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
         }
-        public async Task CreateAsync(Menu menu)
+        public async Task CreateAsync(Menu menu, CancellationToken cancellationToken)
         {
-            await _repository.AddAsync(menu);
+            await _unitOfWork.Menus.AddAsync(menu, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new MenusSpec();
-            var item = await _repository.GetByIdAsync(id, spec);
+            var item = await _unitOfWork.Menus.GetByIdAsync(id, spec, cancellationToken);
             if (item == null) return;
-            await _repository.DeleteAsync(item);
+            _unitOfWork.Menus.Delete(item);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Menu>> GetAllAsync()
+        public async Task<IEnumerable<Menu>> GetAllAsync(CancellationToken cancellationToken)
         {
             var spec = new MenusSpec();
-            return await _repository.GetAllAsync(spec);
+            return await _unitOfWork.Menus.GetAllAsync(spec, cancellationToken);
         }
 
-        public async Task<Menu?> GetByIdAsync(int id)
+        public async Task<Menu?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new MenusSpec();
-            return await _repository.GetByIdAsync(id, spec);
+            return await _unitOfWork.Menus.GetByIdAsync(id, spec, cancellationToken);
         }
 
-        public async Task UpdateAsync(Menu menu)
+        public async Task UpdateAsync(Menu menu, CancellationToken cancellationToken)
         {
-            await _repository.UpdateAsync(menu);
+            _unitOfWork.Menus.Update(menu);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task<bool> ExistsAsync(int id)
+        public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new MenusSpec();
-            return await _repository.ExistsAsync(id, spec);
+            return await _unitOfWork.Menus.ExistsAsync(id, spec, cancellationToken);
         }
-        public async Task<Menu?> GetByDate(DateTime date)
+        public async Task<Menu?> GetByDateAsync(DateTime date, CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).FirstOrDefault(x => x.WeekStartDate.DayOfYear <= date.DayOfYear && x.WeekStartDate.AddDays(6).DayOfYear >= date.DayOfYear);
+            var spec = new MenuByDateSpec(date);
+            return (await _unitOfWork.Menus.GetAllAsync(spec, cancellationToken)).FirstOrDefault();
         }
     }
 }

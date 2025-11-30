@@ -17,9 +17,6 @@ namespace Infrastructure.Specifications
             query = spec.Includes
                 .Aggregate(query, (current, include) => current.Include(include));
 
-            query = spec.IncludeStrings
-                .Aggregate(query, (current, includeString) => current.Include(includeString));
-
             if (spec.OrderBy != null)
                 query = query.OrderBy(spec.OrderBy);
 

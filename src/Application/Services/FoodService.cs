@@ -1,4 +1,4 @@
-﻿using Application.Specifications;
+﻿using Application.Specifications.Foods;
 using Domain.Entities;
 using Application.Interfaces;
 
@@ -6,44 +6,46 @@ namespace Application.Services
 {
     public class FoodService : IFoodService
     {
-        private readonly IGenericRepository<Food> _repository;
-
-        public FoodService(IGenericRepository<Food> repository)
+        private readonly IUnitOfWork _unitOfWork;
+        public FoodService(IUnitOfWork unitOfWork)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
         }
-        public async Task CreateAsync(Food food)
+        public async Task CreateAsync(Food food, CancellationToken cancellationToken)
         {
-            await _repository.AddAsync(food);
+            await _unitOfWork.Foods.AddAsync(food, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new FoodsSpec();
-            var item = await _repository.GetByIdAsync(id, spec);
+            var item = await _unitOfWork.Foods.GetByIdAsync(id, spec, cancellationToken);
             if (item == null) return;
-            await _repository.DeleteAsync(item);
+            _unitOfWork.Foods.Delete(item);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Food>> GetAllAsync()
+        public async Task<IEnumerable<Food>> GetAllAsync(CancellationToken cancellationToken)
         {
             var spec = new FoodsSpec();
-            return await _repository.GetAllAsync(spec);
+            return await _unitOfWork.Foods.GetAllAsync(spec, cancellationToken);
         }
 
-        public async Task<Food?> GetByIdAsync(int id)
+        public async Task<Food?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new FoodsSpec();
-            return await _repository.GetByIdAsync(id, spec);
+            return await _unitOfWork.Foods.GetByIdAsync(id, spec, cancellationToken);
         }
 
-        public async Task UpdateAsync(Food food)
+        public async Task UpdateAsync(Food food, CancellationToken cancellationToken)
         {
-            await _repository.UpdateAsync(food);
+            _unitOfWork.Foods.Update(food);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task<bool> ExistsAsync(int id)
+        public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new FoodsSpec();
-            return await _repository.ExistsAsync(id, spec);
+            return await _unitOfWork.Foods.ExistsAsync(id, spec, cancellationToken);
         }
     }
 }

@@ -1,72 +1,75 @@
 ﻿using Application.Interfaces;
-using Application.Specifications;
+using Application.Specifications.Reservations;
 using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
     public class ReservationService : IReservationService
     {
-        private readonly IGenericRepository<Reservation> _repository;
-        public ReservationService(IGenericRepository<Reservation> repository)
+        private readonly IUnitOfWork _unitOfWork;
+        public ReservationService(IUnitOfWork unitOfWork)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
         }
-        public async Task CreateAsync(Reservation reservation)
+        public async Task CreateAsync(Reservation reservation, CancellationToken cancellationToken)
         {
-            await _repository.AddAsync(reservation);
+            await _unitOfWork.Reservations.AddAsync(reservation, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new ReservationsSpec();
-            var item = await _repository.GetByIdAsync(id, spec);
+            var item = await _unitOfWork.Reservations.GetByIdAsync(id, spec, cancellationToken);
             if (item == null) return;
-            await _repository.DeleteAsync(item);
+            _unitOfWork.Reservations.Delete(item);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Reservation>> GetAllAsync()
+        public async Task<IEnumerable<Reservation>> GetAllAsync(CancellationToken cancellationToken)
         {
             var spec = new ReservationsSpec();
-            return await _repository.GetAllAsync(spec);
+            return await _unitOfWork.Reservations.GetAllAsync(spec, cancellationToken);
         }
 
-        public async Task<Reservation?> GetByIdAsync(int id)
+        public async Task<Reservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new ReservationsSpec();
-            return await _repository.GetByIdAsync(id, spec);
+            return await _unitOfWork.Reservations.GetByIdAsync(id, spec, cancellationToken);
         }
 
-        public async Task UpdateAsync(Reservation reservation)
+        public async Task UpdateAsync(Reservation reservation, CancellationToken cancellationToken)
         {
-            await _repository.UpdateAsync(reservation);
-
+            _unitOfWork.Reservations.Update(reservation);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        public async Task<bool> ExistsAsync(int id)
+        public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken)
         {
             var spec = new ReservationsSpec();
-            return await _repository.ExistsAsync(id, spec);
+            return await _unitOfWork.Reservations.ExistsAsync(id, spec, cancellationToken);
         }
 
-        public async Task<IEnumerable<Reservation>> GetTodayReservationsAsync()
+        public async Task<IEnumerable<Reservation>> GetTodayReservationsAsync(CancellationToken cancellationToken)
         {
-            var reservations = await GetAllAsync();
-            return reservations.Where(x => x.Date.Date == DateTime.Now.Date);
+            var spec = new ReservationByDateSpec(DateTime.Now);
+            return await _unitOfWork.Reservations.GetAllAsync(spec, cancellationToken);
         }
 
-        public async Task<IEnumerable<Reservation>> GetWeeklyReservationsAsync()
+        public async Task<IEnumerable<Reservation>> GetWeeklyReservationsAsync(CancellationToken cancellationToken)
         {
             var weekStart = DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek).Date;
             var weekEnd = weekStart.AddDays(6).Date;
-            var reservations = await GetAllAsync();
-            return reservations.Where(x => x.Date.Date >= weekStart && x.Date.Date <= weekEnd);
+            var spec = new ReservationByDateRangeSpec(weekStart, weekEnd);
+            return await _unitOfWork.Reservations.GetAllAsync(spec, cancellationToken);
         }
-        public async Task<IEnumerable<Reservation>> GetUpcomingReservationsAsync(string userId)
+        public async Task<IEnumerable<Reservation>> GetUpcomingReservationsAsync(string userId, CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).Where(x => x.UserId == userId && x.FoodMenu.Menu.WeekStartDate.AddDays((int)x.FoodMenu.DayOfWeek).DayOfYear >= DateTime.Now.DayOfYear);
+            var spec = new ReservationByUserDateSpec(userId, DateTime.Now);
+            return await _unitOfWork.Reservations.GetAllAsync(spec, cancellationToken);
         }
-        public async Task<IEnumerable<Reservation>> GetByUserId(string userId)
+        public async Task<IEnumerable<Reservation>> GetByUserId(string userId, CancellationToken cancellationToken)
         {
-            return (await GetAllAsync()).Where(x => x.UserId == userId);
+            var spec = new ReservationByUserSpec(userId);
+            return await _unitOfWork.Reservations.GetAllAsync(spec, cancellationToken);
         }
     }
 }
