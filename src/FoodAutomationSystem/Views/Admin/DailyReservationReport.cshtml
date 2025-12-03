@@ -1,0 +1,213 @@
+﻿@model FoodAutomationSystem.ViewModels.DailyReservationReportViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Daily Food Report";
+}
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold text-dark">Daily Food Report</h2>
+            <p class="text-muted">Comprehensive daily summary</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-2"
+               href="@Url.Action("ExportDailyCsv", "Reports", new { date = Model.SelectedDate.ToString("yyyy-MM-dd") })">
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+            <button onclick="window.print()" class="btn btn-primary rounded-pill">Print</button>
+        </div>
+    </div>
+
+    <!-- Date Selector -->
+    <form method="get" class="nice-card mb-4">
+        <label class="form-label">Select Date</label>
+        <input type="date" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+               class="form-control mb-3" />
+        <button class="btn btn-dark w-100 rounded-pill">Load Report</button>
+    </form>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="nice-card p-3">
+                <p class="text-muted mb-1">Total Reservations</p>
+                <h4>@Model.TotalReservations</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="nice-card p-3">
+                <p class="text-muted mb-1">Total Meals</p>
+                <h4>@Model.TotalMeals</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="nice-card p-3">
+                <p class="text-muted mb-1">Unique Users</p>
+                <h4>@Model.UniqueUsers</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="nice-card p-3">
+                <p class="text-muted mb-1">Total Revenue</p>
+                <h4>$@Model.TotalRevenue</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="nice-card p-3">
+                <h5>Food Quantity Distribution</h5>
+                <canvas id="barChart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="nice-card p-3">
+                <h5>Meal Share Percentage</h5>
+                <canvas id="pieChart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="nice-card overflow-hidden">
+        <div class="table-responsive">
+            <table class="table modern-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Meal Name</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Revenue</th>
+                        <th>Share %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.FoodSummary)
+                    {
+                        <tr>
+                            <td>@item.MealName</td>
+                            <td>
+                                <span class="pill-badge @(item.MealType == "breakfast" ? "bg-info text-white" : item.MealType == "lunch" ? "bg-success text-white" : "bg-warning text-dark")">
+                                    @item.MealType
+                                </span>
+                            </td>
+                            <td>@item.Quantity</td>
+                            <td>$@item.Revenue</td>
+                            <td>@item.Percentage.ToString("0.0")%</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td>Total</td>
+                        <td></td>
+                        <td>@Model.TotalMeals</td>
+                        <td>$@Model.TotalRevenue</td>
+                        <td>100%</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const barCtx = document.getElementById('barChart');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(JsonSerializer.Serialize(Model.FoodSummary.Select(x => x.MealName))),
+            datasets: [{
+                label: 'Quantity',
+                data: @Html.Raw(JsonSerializer.Serialize(Model.FoodSummary.Select(x => x.Quantity))),
+                backgroundColor: '#0ea5e9'
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    const pieCtx = document.getElementById('pieChart');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: @Html.Raw(JsonSerializer.Serialize(Model.FoodSummary.Select(x => x.MealName))),
+            datasets: [{
+                data: @Html.Raw(JsonSerializer.Serialize(Model.FoodSummary.Select(x => x.Quantity))),
+                backgroundColor: ['#0ea5e9', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+</script>
+
+<style>
+    /* White cards & rounded */
+    .nice-card {
+        background: #ffffff !important;
+        border-radius: 22px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        padding: 1.5rem !important;
+        margin-bottom: 1rem;
+    }
+
+    /* Chart height */
+    .chart-canvas {
+        height: 300px !important;
+    }
+
+    /* Table styling */
+    .modern-table {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+        .modern-table thead th {
+            border-bottom: 2px solid #f0f0f0;
+            background: #ffffff;
+        }
+
+        .modern-table tbody tr {
+            background: #ffffff;
+            border-bottom: 1px solid #f3f3f3;
+            transition: 0.2s;
+        }
+
+            .modern-table tbody tr:hover {
+                background: #f7faff !important;
+            }
+
+    /* Inputs & selects */
+    .form-control,
+    .form-select,
+    .input-group-text {
+        background: #ffffff !important;
+        border: 1px solid #e3e3e3 !important;
+        border-radius: 20px !important;
+    }
+
+    /* Badges */
+    .pill-badge {
+        padding: 0.35rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+
+    /* Print styles */
+    @@media print {
+        button, form, .btn {
+            display: none !important;
+        }
+
+        .nice-card {
+            box-shadow: none !important;
+        }
+    }
+</style>

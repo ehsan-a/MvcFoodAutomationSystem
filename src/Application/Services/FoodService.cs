@@ -30,6 +30,16 @@ namespace Application.Services
             var spec = new FoodsSpec();
             return await _unitOfWork.Foods.GetAllAsync(spec, cancellationToken);
         }
+        public async Task<IEnumerable<Food>> GetAllAsync(string? skip, string? take, string? titleFilter, string? typeFilter, CancellationToken cancellationToken)
+        {
+            var spec = new FoodsSpec(skip, take, titleFilter, typeFilter);
+            return await _unitOfWork.Foods.GetAllAsync(spec, cancellationToken);
+        }
+        public async Task<IEnumerable<Food>> GetAllAsync(string? titleFilter, string? typeFilter, CancellationToken cancellationToken)
+        {
+            var spec = new FoodsSpec(null, null, titleFilter, typeFilter);
+            return await _unitOfWork.Foods.GetAllAsync(spec, cancellationToken);
+        }
 
         public async Task<Food?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {

@@ -1,5 +1,5 @@
 ﻿@using Domain.Entities
-@model IEnumerable<Food>
+@model FoodAutomationSystem.ViewModels.AdminFoodViewModel
 
 @{
     ViewData["Title"] = "Food Management";
@@ -22,34 +22,37 @@
     </div>
 
     <!-- Filters -->
-    <div class="nice-card mb-4 p-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label class="form-label fw-semibold">Search</label>
-                <div class="input-group rounded-pill overflow-hidden">
-                    <span class="input-group-text bg-white border-end-0">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" class="form-control border-start-0" placeholder="Search meals..." id="searchBox" />
+    <form method="get" asp-action="FoodManagement">
+        <div class="nice-card mb-4 p-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <input type="hidden" value="@Model.Skip" name="skip" />
+                    <input type="hidden" value="@Model.Take" name="take" />
+                    <label class="form-label fw-semibold">Search</label>
+                    <div class="input-group rounded-pill overflow-hidden">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" placeholder="Search meals..." asp-for="TitleFilter" />
+                    </div>
+
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Food Type</label>
+                    <select class="form-select rounded-pill" name="typeFilter" asp-items="@Model.selectListItems">
+                        <option value="">All Foods</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-2">
+                    <button type="submit" class="btn btn-outline-secondary rounded-pill px-4 w-100 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-funnel"></i> Apply
+                    </button>
                 </div>
             </div>
-
-            <div class="col-md-5">
-                <label class="form-label fw-semibold">Meal Type</label>
-                <select class="form-select rounded-pill" id="mealTypeFilter">
-                    <option value="all">All Meals</option>
-                    <option value="Breakfast">Breakfast</option>
-                    <option value="Lunch">Lunch</option>
-                </select>
-            </div>
-
-            <div class="col-lg-2">
-                <button type="submit" class="btn btn-outline-secondary rounded-pill px-4 w-100 shadow-sm d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-funnel"></i> Apply
-                </button>
-            </div>
         </div>
-    </div>
+    </form>
 
     <!-- Table -->
     <div class="nice-card overflow-hidden">
@@ -66,7 +69,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var meal in Model)
+                    @foreach (var meal in Model.Foods)
                     {
                         <tr>
                             <td class="fw-semibold">@meal.Title</td>
@@ -117,10 +120,22 @@
             </table>
         </div>
         <div class="d-flex justify-content-between align-items-center border-top px-4 py-3">
-            <span class="text-muted">Showing n Foods</span>
+            <span class="text-muted">Showing @(Model.Skip + 1) to @(Model.Skip + Model.Foods.Count()) of @Model.All Foods</span>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>Previous</button>
-                <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>Next</button>
+                <form method="get" asp-action="FoodManagement">
+                    <input type="hidden" value="@(Model.Skip - Model.Take)" name="skip" />
+                    <input type="hidden" value="@(Model.Take)" name="take" />
+                    <input type="hidden" value="@Model.TitleFilter" name="titleFilter" />
+                    <input type="hidden" value="@Model.selectListItems.SelectedValue" name="typeFilter" />
+                    <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill" @(Model.PreviousStatus ? "" : "disabled")>Previous</button>
+                </form>
+                <form method="get" asp-action="FoodManagement">
+                    <input type="hidden" value="@(Model.Skip + (Model.Take))" name="skip" />
+                    <input type="hidden" value="@(Model.Take)" name="take" />
+                    <input type="hidden" value="@Model.TitleFilter" name="titleFilter" />
+                    <input type="hidden" value="@Model.selectListItems.SelectedValue" name="typeFilter" />
+                    <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill" @(Model.NextStatus ? "" : "disabled")>Next</button>
+                </form>
             </div>
         </div>
     </div>

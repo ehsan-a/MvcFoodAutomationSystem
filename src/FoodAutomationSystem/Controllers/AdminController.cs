@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NuGet.Packaging.Signing;
 using System.Threading;
 
 namespace FoodAutomationSystem.Controllers
@@ -96,9 +97,30 @@ namespace FoodAutomationSystem.Controllers
             return View(vm);
 
         }
-        public async Task<IActionResult> FoodManagement(CancellationToken cancellationToken)
+        public async Task<IActionResult> FoodManagement(string? skip, string? take, string? titleFilter, string? typeFilter, CancellationToken cancellationToken)
         {
-            return View(await _foodService.GetAllAsync(cancellationToken));
+            if (string.IsNullOrEmpty(skip))
+            {
+                skip = "0";
+                take = "5";
+            }
+            if (int.Parse(skip) < 0) skip = "0";
+            var foods = await _foodService.GetAllAsync(skip, take, titleFilter, typeFilter, cancellationToken);
+            int skipNumber = int.Parse(skip);
+            int takeNumber = int.Parse(take);
+            var vm = new AdminFoodViewModel
+            {
+                Foods = foods,
+                Skip = skipNumber,
+                Take = takeNumber,
+                All = (await _foodService.GetAllAsync(titleFilter, typeFilter, cancellationToken)).Count(),
+                PreviousStatus = skipNumber > 1,
+                NextStatus = foods.Count() == takeNumber,
+                selectListItems = new SelectList(Enum.GetValues<FoodType>().Select(x => new { Id = (int)x, Title = x.ToString() }), "Id", "Title", typeFilter),
+                TitleFilter = titleFilter,
+            };
+
+            return View(vm);
         }
         public async Task<IActionResult> ReservationsManagement(CancellationToken cancellationToken)
         {
@@ -113,6 +135,29 @@ namespace FoodAutomationSystem.Controllers
         public IActionResult Setting()
         {
             return View();
+        }
+
+        public async Task<IActionResult> DailyReservationReport(CancellationToken cancellationToken)
+        {
+            var vm = new DailyReservationReportViewModel
+            {
+                SelectedDate = DateTime.Now.AddDays(-1),
+                TotalReservations = 0,
+                UniqueUsers = 0,
+                TotalMeals = 0,
+                TotalRevenue = 0,
+                FoodSummary = (await _reservationService.GetAllAsync(cancellationToken)).Where(x => x.Date.Date == DateTime.Now.AddDays(-1).Date)
+                .GroupBy(x => x.FoodMenu)
+                .Select(x => new FoodItemSummaryDto
+                {
+                    MealName = x.Key.Food.Title,
+                    MealType = x.Key.Food.Type.ToString(),
+                    Quantity = x.Count(),
+                    Revenue = 0,
+                    Percentage = 0
+                }).ToList()
+            };
+            return View(vm);
         }
     }
 }
