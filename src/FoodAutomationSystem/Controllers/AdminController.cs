@@ -53,7 +53,11 @@ namespace FoodAutomationSystem.Controllers
             if (SelectedWeeklyMenuId.IsNullOrEmpty())
             {
                 if ((await _menuService.GetAllAsync(cancellationToken)).Any())
-                    SelectedWeeklyMenuId = (await _menuService.GetAllAsync(cancellationToken)).FirstOrDefault(x => x.WeekStartDate.DayOfYear <= DateTime.Now.AddDays(1).DayOfYear && x.WeekStartDate.AddDays(6).DayOfYear >= DateTime.Now.AddDays(1).DayOfYear).Id.ToString();
+                {
+                    Menu result = (await _menuService.GetAllAsync(cancellationToken)).FirstOrDefault(x => x.WeekStartDate.DayOfYear <= DateTime.Now.AddDays(1).DayOfYear && x.WeekStartDate.AddDays(6).DayOfYear >= DateTime.Now.AddDays(1).DayOfYear);
+                    if (result is not null) SelectedWeeklyMenuId = result.Id.ToString();
+                    else SelectedWeeklyMenuId= (await _menuService.GetAllAsync(cancellationToken)).Last().Id.ToString();
+                }
                 else return View(new MenuManagementViewModel());
             }
             var menu = await _menuService.GetByIdAsync(int.Parse(SelectedWeeklyMenuId), cancellationToken);
